@@ -87,7 +87,7 @@ class MPConnectionManager: NSObject, ObservableObject {
 // MARK: - Browser Delegate
 extension MPConnectionManager: MCNearbyServiceBrowserDelegate {
     func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String : String]?) {
-        DispatchQueue.main.sync {
+        DispatchQueue.main.async {
             if !self.availablePeers.contains(peerID) {
                 self.availablePeers.append(peerID)
             }
