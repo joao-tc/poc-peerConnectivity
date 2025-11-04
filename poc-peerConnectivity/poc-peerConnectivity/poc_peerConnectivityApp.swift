@@ -11,7 +11,8 @@ import SwiftUI
 struct poc_peerConnectivityApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MPPeerView()
+                .environmentObject(MPConnectionManager(yourName: "Sample"))
         }
     }
 }

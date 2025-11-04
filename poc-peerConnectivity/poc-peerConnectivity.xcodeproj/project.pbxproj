@@ -10,9 +10,22 @@
 		3F58687C2EB96FB4000EE570 /* poc-peerConnectivity.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "poc-peerConnectivity.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		3F58689F2EB97F04000EE570 /* Exceptions for "poc-peerConnectivity" folder in "poc-peerConnectivity" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 3F58687B2EB96FB4000EE570 /* poc-peerConnectivity */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		3F58687E2EB96FB4000EE570 /* poc-peerConnectivity */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3F58689F2EB97F04000EE570 /* Exceptions for "poc-peerConnectivity" folder in "poc-peerConnectivity" target */,
+			);
 			path = "poc-peerConnectivity";
 			sourceTree = "<group>";
 		};
@@ -256,6 +269,8 @@
 				DEVELOPMENT_TEAM = 92RP42WR9X;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "poc-peerConnectivity/Info.plist";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Would like to test MultiPeer Connectivity";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -288,6 +303,8 @@
 				DEVELOPMENT_TEAM = 92RP42WR9X;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "poc-peerConnectivity/Info.plist";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Would like to test MultiPeer Connectivity";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
