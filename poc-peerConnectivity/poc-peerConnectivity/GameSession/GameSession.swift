@@ -19,7 +19,8 @@ public final class GameSession: NSObject, ObservableObject {
     @Published public var hostPassword: String?
 
     private let serviceType = "test"
-    private let myPeerID = MCPeerID(displayName: UIDevice.current.name)
+//    private let myPeerID = MCPeerID(displayName: UIDevice.current.name)
+    private let myPeerID: MCPeerID
     internal var session: MCSession!
     private var advertiser: MCNearbyServiceAdvertiser?
     private var currentNonce: String?
@@ -27,8 +28,9 @@ public final class GameSession: NSObject, ObservableObject {
     private var browser: MCNearbyServiceBrowser?
 
     public var inviteResponseHandler: MPCInviteResponseHandlerDelegate?
-
-    public override init() {
+    
+    public init(username: String) {
+        myPeerID = MCPeerID(displayName: username)
         super.init()
         session = MCSession(
             peer: myPeerID,

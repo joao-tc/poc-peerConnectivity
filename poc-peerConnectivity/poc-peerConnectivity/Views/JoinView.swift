@@ -9,7 +9,14 @@ import SwiftUI
 
 struct JoinView: View {
 
-    @ObservedObject private var session = GameSession()
+    @ObservedObject private var session: GameSession
+    
+    private var username: String
+    
+    public init(username: String) {
+        self.username = username
+        self.session = GameSession(username: username)
+    }
 
     @State private var password: String = ""
 
