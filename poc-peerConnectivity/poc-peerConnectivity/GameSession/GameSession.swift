@@ -12,23 +12,36 @@ import SwiftUI
 import UIKit
 
 public final class GameSession: NSObject, ObservableObject {
+    
+    // Peers
     @Published public var connectedPeers = [MCPeerID]()
     @Published public var possiblePeers = [MCPeerID]()
     internal var discoveryInfoByPeer: [MCPeerID: [String: String]] = [:]
 
+    // Password
     @Published public var hostPassword: String?
 
-    private let serviceType = "test"
-//    private let myPeerID = MCPeerID(displayName: UIDevice.current.name)
+    // Peer info
     private let myPeerID: MCPeerID
+    public func getPeerName() -> String { return myPeerID.displayName }
+    
+    // Session info
+    private let serviceType = "test"
     internal var session: MCSession!
+    
+    // Advertiser
     private var advertiser: MCNearbyServiceAdvertiser?
     private var currentNonce: String?
     private var currentProof: String?
+    
+    // Browser
     private var browser: MCNearbyServiceBrowser?
 
+    // Services and handlers
     public var inviteResponseHandler: MPCInviteResponseHandlerDelegate?
+    public var messageService: MessageService?
     
+    // initializers
     public init(username: String) {
         myPeerID = MCPeerID(displayName: username)
         super.init()
@@ -40,7 +53,7 @@ public final class GameSession: NSObject, ObservableObject {
         session.delegate = self
     }
 
-    public func send(data: GameData) {
+    public func send(message data: MPCMessage) {
         guard !session.connectedPeers.isEmpty else { return }
         if let data = try? JSONEncoder().encode(data) {
             try? session.send(
@@ -79,6 +92,7 @@ public final class GameSession: NSObject, ObservableObject {
                 return
             }
         }
+        
         let data = try? JSONEncoder().encode(password)
         browser?.invitePeer(peerID, to: session, withContext: data, timeout: 10)
     }

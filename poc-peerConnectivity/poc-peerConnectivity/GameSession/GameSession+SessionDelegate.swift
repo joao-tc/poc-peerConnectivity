@@ -47,8 +47,14 @@ extension GameSession: MCSessionDelegate {
         didReceive data: Data,
         fromPeer peerID: MCPeerID
     ) {
-        if let gameData = try? JSONDecoder().decode(GameData.self, from: data) {
-            print("Received game data: \nX: \(gameData.x)   Y: \(gameData.y)")
+        if let message = try? JSONDecoder().decode(MPCMessage.self, from: data) {
+            switch(message) {
+            case .text(let text):
+                print("[\(peerID)] \(text)")
+            
+            case .game(let game):
+                print("[\(peerID)] X: \(game.x) Y: \(game.y)")
+            }
         }
     }
 

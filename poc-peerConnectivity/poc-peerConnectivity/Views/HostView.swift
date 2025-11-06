@@ -10,43 +10,55 @@ import SwiftUI
 
 struct HostView: View {
 
-    
     @ObservedObject private var session: GameSession
-    
+
     private var username: String
-    
+
     public init(username: String) {
         self.username = username
         self.session = GameSession(username: username)
     }
 
     @State private var password: String = ""
+    @State private var gotoGame: Bool = false
 
     var body: some View {
-        VStack {
-            Text("Hosting Game")
-                .font(.title2)
-
-            Spacer()
-            
-            Text("The password is:")
-            Text(password)
-                .font(.largeTitle)
-
-            Spacer()
-
+        NavigationStack {
             VStack {
-                Text("Connected peers")
-                ForEach(session.connectedPeers, id: \.self) { peer in
-                    Text(peer.displayName)
+                Text("Hosting Game")
+                    .font(.title2)
+
+                Spacer()
+
+                Text("The password is:")
+                Text(password)
+                    .font(.largeTitle)
+
+                Spacer()
+
+                VStack {
+                    Text("Connected peers")
+                    ForEach(session.connectedPeers, id: \.self) { peer in
+                        Text(peer.displayName)
+                    }
+                }
+
+                Spacer()
+                Spacer()
+                Spacer()
+
+                Button("Start game") {
+                    guard !session.connectedPeers.isEmpty else { return }
+                    session.messageService = MessageService(session: session)
+                    session.stopAdvertising()
+                    gotoGame = true
                 }
             }
-            
-            Spacer()
-            Spacer()
-            Spacer()
         }
         .padding(16)
+        .navigationDestination(isPresented: $gotoGame) {
+            GameView(session: session)
+        }
         .onAppear {
             password = generatePassword()
             session.setHostPassword(password)
@@ -54,11 +66,11 @@ struct HostView: View {
         }
         .onDisappear {
             session.stopAdvertising()
-            session.disconnect()
+//            session.disconnect()
             password = ""
         }
     }
-    
+
     private func generatePassword(length: Int = 6) -> String {
         let charset = Array("ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
         return String((0..<length).compactMap { _ in charset.randomElement() })
