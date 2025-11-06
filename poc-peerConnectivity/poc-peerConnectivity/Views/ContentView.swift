@@ -15,6 +15,14 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             VStack {
+                
+                Text("POC - Multipeer Connectivity")
+                    .font(.title2)
+                
+                Spacer()
+                
+                Text("Host or join a game")
+                
                 HStack {
                     Button("Host") {
                         gotoHost = true
@@ -29,6 +37,10 @@ struct ContentView: View {
                     .buttonStyle(.borderedProminent)
                 }
                 .padding(32)
+                
+                Spacer()
+                
+                Text("You must be connected to the same wifi network")
             }
             .padding()
             .navigationDestination(isPresented: $gotoHost) {

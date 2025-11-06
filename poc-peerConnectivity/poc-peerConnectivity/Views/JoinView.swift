@@ -8,37 +8,55 @@
 import SwiftUI
 
 struct JoinView: View {
-    
+
     @ObservedObject private var session = GameSession()
-    
+
     @State private var password: String = ""
-    
+
+    @State private var errorMessage: String = ""
+
+    @State private var gotoLobby: Bool = false
+
     var body: some View {
-        
-        VStack {
-            Text("Join game")
-            
-            HStack {
-                TextField("passowrd", text: $password)
-                Spacer()
-                Button("Join") {
-                    guard !password.isEmpty else { return }
-                    tryToJoin(withPassword: password)
+
+        NavigationStack {
+            VStack {
+                Text("Join game")
+                    .font(.title2)
+
+                HStack {
+                    TextField("passowrd", text: $password)
+                        .textFieldStyle(.roundedBorder)
+                        .textCase(.uppercase)
+
+                    Spacer()
+
+                    Button("Join") {
+                        guard !password.isEmpty else { return }
+                        tryToJoin(withPassword: password)
+                    }
+                    .buttonStyle(.automatic)
                 }
-                .buttonStyle(.automatic)
+                .padding(16)
+
+                Text(errorMessage)
+
+                Spacer()
             }
             .padding(16)
+            .onAppear {
+                session.inviteResponseHandler = self
+                session.startBrowsing()
+            }
+            .onDisappear {
+                session.stopBrowsing()
+            }
         }
-        .padding(16)
-        .onAppear {
-            session.startBrowsing()
-        }
-        .onDisappear {
-            session.stopBrowsing()
-            session.disconnect()
+        .navigationDestination(isPresented: $gotoLobby) {
+            LobbyView(session: session)
         }
     }
-    
+
     private func tryToJoin(withPassword password: String) {
         for peer in session.possiblePeers {
             session.sendInvite(to: peer, withPassword: password)
@@ -46,4 +64,17 @@ struct JoinView: View {
     }
 }
 
-
+extension JoinView: MPCInviteResponseHandlerDelegate {
+    
+    func didReceiveInviteResponse(_ response: InviteResponse) {
+        switch response {
+        case .accepted:
+            gotoLobby = true
+        case .wrongPassword:
+            errorMessage = "Wrong password"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                errorMessage = ""
+            }
+        }
+    }
+}

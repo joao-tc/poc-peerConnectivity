@@ -23,6 +23,8 @@ public final class GameSession: NSObject, ObservableObject {
     private var session: MCSession!
     private var advertiser: MCNearbyServiceAdvertiser?
     private var browser: MCNearbyServiceBrowser?
+    
+    public var inviteResponseHandler: MPCInviteResponseHandlerDelegate?
 
     public override init() {
         super.init()
@@ -108,7 +110,7 @@ extension GameSession: MCSessionDelegate {
         peer peerID: MCPeerID,
         didChange state: MCSessionState
     ) {
-        print("🔄 [SESSION] Peer \(peerID.displayName) changed state")
+        print("[SESSION] Peer \(peerID.displayName) changed state")
 
         DispatchQueue.main.async { [weak self] in
             self?.connectedPeers = session.connectedPeers
@@ -194,10 +196,12 @@ extension GameSession: MCNearbyServiceAdvertiserDelegate {
 
         if let hostPassword = hostPassword, hostPassword == receivedPassword {
             print("[ADVERTISER] ✅ Password correct. Accepting invite...")
+            inviteResponseHandler?.didReceiveInviteResponse(.accepted)
             invitationHandler(true, session)
         } else {
             print("[ADVERTISER] ❌ Wrong password. Rejecting invite...")
             print("Host password: \(hostPassword ?? "nil"), Received password: \(receivedPassword ?? "nil")")
+            inviteResponseHandler?.didReceiveInviteResponse(.wrongPassword)
             invitationHandler(false, nil)
         }
     }
@@ -246,4 +250,16 @@ extension GameSession: MCNearbyServiceBrowserDelegate {
             "[BROWSER] Error to start browsing: \(error.localizedDescription)"
         )
     }
+}
+
+// MARK: - Invite Response Delegate
+
+public protocol MPCInviteResponseHandlerDelegate {
+    func didReceiveInviteResponse(_ response: InviteResponse) -> Void
+}
+
+// MARK: - Invite Reopnse Enum
+public enum InviteResponse {
+    case wrongPassword
+    case accepted
 }

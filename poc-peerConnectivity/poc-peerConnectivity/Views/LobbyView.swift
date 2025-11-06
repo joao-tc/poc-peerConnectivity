@@ -1,23 +1,27 @@
 //
-//  HostView.swift
+//  LobbyView.swift
 //  poc-peerConnectivity
 //
-//  Created by João Pedro Teixeira de Carvalho on 04/11/25.
+//  Created by João Pedro Teixeira de Carvalho on 05/11/25.
 //
 
-import MultipeerConnectivity
 import SwiftUI
+import MultipeerConnectivity
 
-struct HostView: View {
-
-    @ObservedObject private var session = GameSession()
+struct LobbyView: View {
+    @ObservedObject private var session: GameSession
+    
+    init(session: GameSession) {
+        self.session = session
+    }
 
     private let password: String = String("\(UUID())".prefix(6))
 
     var body: some View {
         VStack {
-            Text("Hosting Game")
+            Text("Game Lobby")
                 .font(.title2)
+            Text("Waiting for host to start the game")
 
             Spacer()
             
@@ -39,12 +43,7 @@ struct HostView: View {
             Spacer()
         }
         .padding(16)
-        .onAppear {
-            session.setHostPassword(password)
-            session.startAdvertising()
-        }
         .onDisappear {
-            session.stopAdvertising()
             session.disconnect()
         }
     }
