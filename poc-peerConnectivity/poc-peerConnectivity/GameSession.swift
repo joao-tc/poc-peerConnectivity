@@ -10,10 +10,12 @@ import Foundation
 import MultipeerConnectivity
 import SwiftUI
 import UIKit
+import CryptoKit
 
 public final class GameSession: NSObject, ObservableObject {
     @Published public var connectedPeers = [MCPeerID]()
     @Published public var possiblePeers = [MCPeerID]()
+    private var discoveryInfoByPeer: [MCPeerID: [String: String]] = [:]
 
     @Published public var hostPassword: String?
 
@@ -22,6 +24,8 @@ public final class GameSession: NSObject, ObservableObject {
     //    private let myPeerID = MCPeerID(displayName: "Simulador")
     private var session: MCSession!
     private var advertiser: MCNearbyServiceAdvertiser?
+    private var currentNonce: String?
+    private var currentProof: String?
     private var browser: MCNearbyServiceBrowser?
     
     public var inviteResponseHandler: MPCInviteResponseHandlerDelegate?
@@ -36,15 +40,30 @@ public final class GameSession: NSObject, ObservableObject {
         session.delegate = self
     }
 
-    // Send advertising
+    // MARK: Advertising funcs
     public func startAdvertising() {
         print("[ADVERTISER] Started advertising...")
         print("[ADVERTISER] Device name: \(myPeerID.displayName)")
         print("[ADVERTISER] Service type: \(serviceType)")
 
+        let nonce = randomNonce()
+        currentNonce = nonce
+        if let password = hostPassword {
+            currentProof = hmacSHA256Hex(key: password, message: nonce)
+        } else {
+            currentProof = nil
+        }
+        
+        let info: [String: String]? = {
+            if let nonce = currentNonce, let proof = currentProof { return ["nonce": nonce, "proof": proof] }
+            else if let nonce = currentNonce { return ["nonce": nonce] }
+            else { return nil }
+        }()
+        
+        
         advertiser = MCNearbyServiceAdvertiser(
             peer: myPeerID,
-            discoveryInfo: nil,
+            discoveryInfo: info,
             serviceType: serviceType
         )
         advertiser?.delegate = self
@@ -59,7 +78,7 @@ public final class GameSession: NSObject, ObservableObject {
         advertiser?.stopAdvertisingPeer()
     }
 
-    // Search for peers
+    // MARK: Browser funcs
     public func startBrowsing() {
         print("[BROWSER] Starting browser...")
         print("[BROWSER] Device name: \(myPeerID.displayName)")
@@ -80,7 +99,8 @@ public final class GameSession: NSObject, ObservableObject {
         browser?.stopBrowsingForPeers()
     }
 
-    // Send game data
+    
+    // MARK: Other main funcs
     public func send(data: GameData) {
         guard !session.connectedPeers.isEmpty else { return }
         if let data = try? JSONEncoder().encode(data) {
@@ -94,10 +114,34 @@ public final class GameSession: NSObject, ObservableObject {
 
     public func setHostPassword(_ password: String) {
         hostPassword = password
+        
+        advertiser?.stopAdvertisingPeer()
+        advertiser = nil
+        startAdvertising()
     }
     
     public func disconnect() {
         session.disconnect()
+    }
+    
+    public func sendInvite(to peerID: MCPeerID) {
+        browser?.invitePeer(peerID, to: session, withContext: nil, timeout: 10)
+    }
+
+    public func sendInvite(to peerID: MCPeerID, withPassword password: String) {
+        if let info = discoveryInfoByPeer[peerID],
+           let nonce = info["nonce"],
+           let expectedProof = info["proof"] {
+            let computedProof = hmacSHA256Hex(key: password, message: nonce)
+            
+            if computedProof != expectedProof {
+                inviteResponseHandler?.didReceiveInviteResponse(.wrongPassword)
+                return
+            }
+        }
+        
+        let data = try? JSONEncoder().encode(password)
+        browser?.invitePeer(peerID, to: session, withContext: data, timeout: 10)
     }
 }
 
@@ -118,9 +162,8 @@ extension GameSession: MCSessionDelegate {
             switch state {
             case .connected:
                 print("[SESSION] Connected to \(peerID.displayName)")
-                print(
-                    "[SESSION] Total peers connected: \(session.connectedPeers.count)"
-                )
+                print("[SESSION] Total peers connected: \(session.connectedPeers.count)")
+                self?.inviteResponseHandler?.didReceiveInviteResponse(.accepted)
             case .connecting:
                 print("[SESSION] Connecting to \(peerID.displayName)...")
             case .notConnected:
@@ -170,15 +213,6 @@ extension GameSession: MCSessionDelegate {
 
 // MARK: - Advertiser Delegate
 extension GameSession: MCNearbyServiceAdvertiserDelegate {
-    public func browser(
-        _ browser: MCNearbyServiceBrowser,
-        didNotStartBrowsingForPeers error: any Error
-    ) {
-        print(
-            "[ADVERTISER] Error trying to start advertising: \(error.localizedDescription)"
-        )
-    }
-
     public func advertiser(
         _ advertiser: MCNearbyServiceAdvertiser,
         didReceiveInvitationFromPeer peerID: MCPeerID,
@@ -196,14 +230,21 @@ extension GameSession: MCNearbyServiceAdvertiserDelegate {
 
         if let hostPassword = hostPassword, hostPassword == receivedPassword {
             print("[ADVERTISER] ✅ Password correct. Accepting invite...")
-            inviteResponseHandler?.didReceiveInviteResponse(.accepted)
             invitationHandler(true, session)
         } else {
             print("[ADVERTISER] ❌ Wrong password. Rejecting invite...")
             print("Host password: \(hostPassword ?? "nil"), Received password: \(receivedPassword ?? "nil")")
-            inviteResponseHandler?.didReceiveInviteResponse(.wrongPassword)
             invitationHandler(false, nil)
         }
+    }
+    
+    public func advertiser(
+        _ advertiser: MCNearbyServiceAdvertiser,
+        didNotStartAdvertisingPeer error: any Error
+    ) {
+        print(
+            "[ADVERTISER] Error to start advertising: \(error.localizedDescription)"
+        )
     }
 }
 
@@ -215,20 +256,8 @@ extension GameSession: MCNearbyServiceBrowserDelegate {
         withDiscoveryInfo info: [String: String]?
     ) {
         print("[BROWSER] Peer found: \(peerID.displayName)")
-        print("[BROWSER] Peer found: \(peerID)")
-
         possiblePeers.append(peerID)
-        //        print("[BROWSER] Sending invite to: \(peerID.displayName)")
-        //        browser.invitePeer(peerID, to: session, withContext: nil, timeout: 10)
-    }
-
-    public func sendInvite(to peerID: MCPeerID) {
-        browser?.invitePeer(peerID, to: session, withContext: nil, timeout: 10)
-    }
-
-    public func sendInvite(to peerID: MCPeerID, withPassword password: String) {
-        let data = try? JSONEncoder().encode(password)
-        browser?.invitePeer(peerID, to: session, withContext: data, timeout: 10)
+        if let info = info { discoveryInfoByPeer[peerID] = info }
     }
 
     public func browser(
@@ -236,24 +265,21 @@ extension GameSession: MCNearbyServiceBrowserDelegate {
         lostPeer peerID: MCPeerID
     ) {
         print("[BROWSER] Peer lost: \(peerID.displayName)")
-
-        possiblePeers.removeAll(where: {
-            $0 == peerID
-        })
+        possiblePeers.removeAll { $0 == peerID }
+        discoveryInfoByPeer.removeValue(forKey: peerID)
     }
-
-    public func advertiser(
-        _ advertiser: MCNearbyServiceAdvertiser,
-        didNotStartAdvertisingPeer error: any Error
+    
+    public func browser(
+        _ browser: MCNearbyServiceBrowser,
+        didNotStartBrowsingForPeers error: any Error
     ) {
         print(
-            "[BROWSER] Error to start browsing: \(error.localizedDescription)"
+            "[BROWSER] Error trying to start browsing: \(error.localizedDescription)"
         )
     }
 }
 
 // MARK: - Invite Response Delegate
-
 public protocol MPCInviteResponseHandlerDelegate {
     func didReceiveInviteResponse(_ response: InviteResponse) -> Void
 }
@@ -262,4 +288,20 @@ public protocol MPCInviteResponseHandlerDelegate {
 public enum InviteResponse {
     case wrongPassword
     case accepted
+}
+
+// MARK: - Crypto
+extension GameSession {
+    
+    private func hmacSHA256Hex(key: String, message: String) -> String {
+        let keyData = Data(key.utf8)
+        let msgData = Data(message.utf8)
+        let hmac = HMAC<SHA256>.authenticationCode(for: msgData, using: SymmetricKey(data: keyData))
+        return hmac.map { String(format: "%02x", $0) }.joined()
+    }
+    
+    private func randomNonce(_ count: Int = 16) -> String {
+        let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        return String((0..<count).compactMap { _ in chars.randomElement() })
+    }
 }

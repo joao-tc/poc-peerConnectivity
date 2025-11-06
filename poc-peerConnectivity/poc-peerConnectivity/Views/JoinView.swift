@@ -27,7 +27,7 @@ struct JoinView: View {
                 HStack {
                     TextField("passowrd", text: $password)
                         .textFieldStyle(.roundedBorder)
-                        .textCase(.uppercase)
+                        .textInputAutocapitalization(.characters)
 
                     Spacer()
 

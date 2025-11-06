@@ -12,7 +12,7 @@ struct HostView: View {
 
     @ObservedObject private var session = GameSession()
 
-    private let password: String = String("\(UUID())".prefix(6))
+    @State private var password: String = ""
 
     var body: some View {
         VStack {
@@ -40,12 +40,19 @@ struct HostView: View {
         }
         .padding(16)
         .onAppear {
+            password = generatePassword()
             session.setHostPassword(password)
             session.startAdvertising()
         }
         .onDisappear {
             session.stopAdvertising()
             session.disconnect()
+            password = ""
         }
+    }
+    
+    private func generatePassword(length: Int = 6) -> String {
+        let charset = Array("ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
+        return String((0..<length).compactMap { _ in charset.randomElement() })
     }
 }
