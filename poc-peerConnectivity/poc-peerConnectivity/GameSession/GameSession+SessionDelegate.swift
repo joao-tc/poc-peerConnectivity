@@ -47,6 +47,7 @@ extension GameSession: MCSessionDelegate {
         didReceive data: Data,
         fromPeer peerID: MCPeerID
     ) {
+        print("[\(getPeerName())] Received data, trying to decode...")
         if let message = try? JSONDecoder().decode(MPCMessage.self, from: data) {
             switch(message) {
             case .text(let text):
@@ -56,9 +57,14 @@ extension GameSession: MCSessionDelegate {
                 print("[\(peerID)] X: \(game.x) Y: \(game.y)")
                 
             case .notification(let not):
-                print("[\(peerID)] Received notification: \(not.notification)")
-                notify(not.notification)
+                print("[\(getPeerName())] Received notification: \(not.notification)")
+//                guard seenNotifications.contains(not.id) else { return }
+//                seenNotifications.insert(not.id)
+                
+                notifyDelegate(not.notification)
             }
+        } else {
+            print("[\(getPeerName())] Failed to decode data")
         }
     }
 

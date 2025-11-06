@@ -39,6 +39,7 @@ public final class GameSession: NSObject, ObservableObject {
 
     // Services and handlers
     public var responsiveHandler: MPCResponsiveDelegate?
+    internal var seenNotifications = Set<UUID>()
     public var messageService: MPCMessageService?
     
     // initializers
@@ -63,6 +64,8 @@ public final class GameSession: NSObject, ObservableObject {
                 toPeers: session.connectedPeers,
                 with: .reliable
             )
+            try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+            print("Data sent")
         }
     }
 
@@ -78,11 +81,15 @@ public final class GameSession: NSObject, ObservableObject {
         session.disconnect()
     }
     
-    public func notify(_ notification: MPCResponsiveNotifications) {
+    public func notifyDelegate(_ notification: MPCResponsiveNotifications) {
+        responsiveHandler?.notify(notification)
+    }
+    
+    public func sendNotification(_ notification: MPCResponsiveNotifications) {
         let payLoad = NotificationPayLoad(notification: notification)
         let message = MPCMessage.notification(payLoad)
         send(message: message)
-        print("Sending notification: \(notification)")
+        print("[\(getPeerName())] Sending notification: \(notification)")
     }
 
     public func sendInvite(to peerID: MCPeerID) {
