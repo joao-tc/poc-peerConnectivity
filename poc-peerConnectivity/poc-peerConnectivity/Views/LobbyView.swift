@@ -13,39 +13,60 @@ struct LobbyView: View {
     
     private let password: String
     
+    @State private var gotoGame: Bool = false
+    
     init(session: GameSession, password: String) {
         self.session = session
         self.password = password
     }
 
     var body: some View {
-        VStack {
-            Text("Game Lobby")
-                .font(.title2)
-            Text("Waiting for host to start the game")
-
-            Spacer()
-            
-            Text("The password is:")
-            Text(password)
-                .font(.largeTitle)
-
-            Spacer()
-
+        NavigationStack {
             VStack {
-                Text("Connected peers")
-                ForEach(session.connectedPeers, id: \.self) { peer in
-                    Text(peer.displayName)
+                Text("Game Lobby")
+                    .font(.title2)
+                Text("Waiting for host to start the game")
+
+                Spacer()
+                
+                Text("The password is:")
+                Text(password)
+                    .font(.largeTitle)
+
+                Spacer()
+
+                VStack {
+                    Text("Connected peers")
+                    ForEach(session.connectedPeers, id: \.self) { peer in
+                        Text(peer.displayName)
+                    }
                 }
+                
+                Spacer()
+                Spacer()
+                Spacer()
             }
-            
-            Spacer()
-            Spacer()
-            Spacer()
         }
         .padding(16)
+        .navigationDestination(isPresented: $gotoGame) {
+            GameView(session: session)
+        }
+        .onAppear {
+            session.responsiveHandler = self
+        }
         .onDisappear {
             session.disconnect()
+        }
+    }
+}
+
+extension LobbyView: MPCResponsiveDelegate {
+    func notify(_ response: MPCResponsiveNotifications) {
+        switch(response) {
+        case .nextView:
+            gotoGame = true
+        default:
+            break
         }
     }
 }

@@ -7,6 +7,6 @@
 
 import Foundation
 
-public protocol MPCInviteResponseHandlerDelegate {
-    func didReceiveInviteResponse(_ response: InviteResponse) -> Void
+public protocol MPCResponsiveDelegate {
+    func notify(_ response: MPCResponsiveNotifications) -> Void
 }

@@ -26,10 +26,10 @@ extension GameSession: MCNearbyServiceAdvertiserDelegate {
         }
 
         if let hostPassword = hostPassword, hostPassword == receivedPassword {
-            print("[ADVERTISER] ✅ Password correct. Accepting invite...")
+            print("[ADVERTISER] Password correct. Accepting invite...")
             invitationHandler(true, session)
         } else {
-            print("[ADVERTISER] ❌ Wrong password. Rejecting invite...")
+            print("[ADVERTISER] Wrong password. Rejecting invite...")
             print("Host password: \(hostPassword ?? "nil"), Received password: \(receivedPassword ?? "nil")")
             invitationHandler(false, nil)
         }

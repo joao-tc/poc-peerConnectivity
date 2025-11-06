@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-public final class MessageService {
+public final class MPCMessageService {
     
     private var session: GameSession
     
@@ -19,7 +19,7 @@ public final class MessageService {
     @Published private var messages: [TextPayload] = []
     
     public func getMessages() -> [String] {
-        messages.compactMap { $0.message }
+        messages.compactMap { "[\($0.sender)] \($0.message)" }
     }
     
     public func addMessage(_ message: String, from sender: String) {

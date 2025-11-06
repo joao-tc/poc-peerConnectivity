@@ -10,9 +10,9 @@ import SwiftUI
 struct JoinView: View {
 
     @ObservedObject private var session: GameSession
-    
+
     private var username: String
-    
+
     public init(username: String) {
         self.username = username
         self.session = GameSession(username: username)
@@ -52,7 +52,7 @@ struct JoinView: View {
             }
             .padding(16)
             .onAppear {
-                session.inviteResponseHandler = self
+                session.responsiveHandler = self
                 session.startBrowsing()
                 password = ""
             }
@@ -72,9 +72,8 @@ struct JoinView: View {
     }
 }
 
-extension JoinView: MPCInviteResponseHandlerDelegate {
-    
-    func didReceiveInviteResponse(_ response: InviteResponse) {
+extension JoinView: MPCResponsiveDelegate {
+    func notify(_ response: MPCResponsiveNotifications) {
         switch response {
         case .accepted:
             gotoLobby = true
@@ -83,6 +82,8 @@ extension JoinView: MPCInviteResponseHandlerDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 errorMessage = ""
             }
+        default:
+            break
         }
     }
 }

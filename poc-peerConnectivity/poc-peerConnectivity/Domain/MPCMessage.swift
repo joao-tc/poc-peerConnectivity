@@ -10,6 +10,7 @@ import Foundation
 public enum MPCMessage: Codable {
     case text(TextPayload)
     case game(GamePayload)
+    case notification(NotificationPayLoad)
 }
 
 public struct TextPayload: Codable {
@@ -20,4 +21,8 @@ public struct TextPayload: Codable {
 public struct GamePayload: Codable {
     public let x: CGFloat
     public let y: CGFloat
+}
+
+public struct NotificationPayLoad: Codable {
+    public let notification: MPCResponsiveNotifications
 }

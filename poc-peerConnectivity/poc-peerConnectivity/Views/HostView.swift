@@ -49,8 +49,9 @@ struct HostView: View {
 
                 Button("Start game") {
                     guard !session.connectedPeers.isEmpty else { return }
-                    session.messageService = MessageService(session: session)
+                    session.messageService = MPCMessageService(session: session)
                     session.stopAdvertising()
+                    session.notify(.nextView)
                     gotoGame = true
                 }
             }

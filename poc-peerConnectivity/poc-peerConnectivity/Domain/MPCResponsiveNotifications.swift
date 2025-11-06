@@ -7,7 +7,9 @@
 
 import Foundation
 
-public enum InviteResponse {
+public enum MPCResponsiveNotifications: Codable {
+    case nextView
+    case previousView
     case wrongPassword
     case accepted
 }

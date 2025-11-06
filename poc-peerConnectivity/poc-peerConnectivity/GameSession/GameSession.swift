@@ -38,12 +38,14 @@ public final class GameSession: NSObject, ObservableObject {
     private var browser: MCNearbyServiceBrowser?
 
     // Services and handlers
-    public var inviteResponseHandler: MPCInviteResponseHandlerDelegate?
-    public var messageService: MessageService?
+    public var responsiveHandler: MPCResponsiveDelegate?
+    public var messageService: MPCMessageService?
     
     // initializers
     public init(username: String) {
-        myPeerID = MCPeerID(displayName: username)
+        var safeName = ""
+        safeName = username.isEmpty ? UIDevice.current.name : username
+        myPeerID = MCPeerID(displayName: safeName)
         super.init()
         session = MCSession(
             peer: myPeerID,
@@ -75,6 +77,13 @@ public final class GameSession: NSObject, ObservableObject {
     public func disconnect() {
         session.disconnect()
     }
+    
+    public func notify(_ notification: MPCResponsiveNotifications) {
+        let payLoad = NotificationPayLoad(notification: notification)
+        let message = MPCMessage.notification(payLoad)
+        send(message: message)
+        print("Sending notification: \(notification)")
+    }
 
     public func sendInvite(to peerID: MCPeerID) {
         browser?.invitePeer(peerID, to: session, withContext: nil, timeout: 10)
@@ -88,7 +97,6 @@ public final class GameSession: NSObject, ObservableObject {
             let computedProof = hmacSHA256Hex(key: password, message: nonce)
 
             if computedProof != expectedProof {
-                inviteResponseHandler?.didReceiveInviteResponse(.wrongPassword)
                 return
             }
         }
