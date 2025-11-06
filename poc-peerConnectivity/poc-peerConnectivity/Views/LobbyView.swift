@@ -11,11 +11,12 @@ import MultipeerConnectivity
 struct LobbyView: View {
     @ObservedObject private var session: GameSession
     
-    init(session: GameSession) {
+    private let password: String
+    
+    init(session: GameSession, password: String) {
         self.session = session
+        self.password = password
     }
-
-    private let password: String = String("\(UUID())".prefix(6))
 
     var body: some View {
         VStack {

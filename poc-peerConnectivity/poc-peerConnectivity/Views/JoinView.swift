@@ -47,13 +47,14 @@ struct JoinView: View {
             .onAppear {
                 session.inviteResponseHandler = self
                 session.startBrowsing()
+                password = ""
             }
             .onDisappear {
                 session.stopBrowsing()
             }
         }
         .navigationDestination(isPresented: $gotoLobby) {
-            LobbyView(session: session)
+            LobbyView(session: session, password: password)
         }
     }
 
