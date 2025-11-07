@@ -39,7 +39,7 @@ public final class GameSession: NSObject, ObservableObject {
 
     // Services and handlers
     public var notificationHandler: MPCNotificationDelegate?
-    public var messageService: MPCMessageService?
+    public var textChatService: MPCTextChatService?
     
     // initializers
     public init(username: String) {
@@ -63,15 +63,18 @@ public final class GameSession: NSObject, ObservableObject {
                 toPeers: session.connectedPeers,
                 with: .reliable
             )
-            try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
-            print("Data sent")
         }
     }
     
     public func send(text: String, from user: String) {
         print("[\(user)] Trying to send text message: \(text)")
-        print("Current session has messageService? \(messageService != nil)")
-        messageService?.addMessage(text, from: user)
+        print("Current session has messageService? \(textChatService != nil)")
+        
+        textChatService?.addMessage(text, from: user)
+        
+        let payload = TextPayload(message: text, sender: user)
+        let message = MPCMessage.text(payload)
+        send(message: message)
     }
 
     public func setHostPassword(_ password: String) {

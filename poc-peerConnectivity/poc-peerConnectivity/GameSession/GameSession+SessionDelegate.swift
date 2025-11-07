@@ -47,19 +47,24 @@ extension GameSession: MCSessionDelegate {
         didReceive data: Data,
         fromPeer peerID: MCPeerID
     ) {
-        print("[\(getPeerName())] Received data, trying to decode...")
+//        print("[\(getPeerName())] Received data, trying to decode...")
         if let message = try? JSONDecoder().decode(MPCMessage.self, from: data) {
             switch(message) {
-            case .text(let text):
-                print("[\(peerID)] \(text)")
+            case .text(let payload):
+                print("[\(peerID.displayName)] \(payload.message)")
+                textChatService?.addMessage(payload.message, from: payload.sender)
+                notifyDelegate(.refresh)
             
-            case .game(let game):
-                print("[\(peerID)] X: \(game.x) Y: \(game.y)")
+            case .game(let payload):
+                print("[\(peerID)] X: \(payload.x) Y: \(payload.y)")
                 
-            case .notification(let not):
-                print("[\(getPeerName())] Received notification: \(not.notification)")
+            case .notification(let payload):
+                print("[\(getPeerName())] Received notification: \(payload.notification)")
+                notifyDelegate(payload.notification)
                 
-                notifyDelegate(not.notification)
+            case .textChatService(let payload):
+                print("[\(getPeerName())] Received the chat service")
+                textChatService = payload.service
             }
         } else {
             print("[\(getPeerName())] Failed to decode data")

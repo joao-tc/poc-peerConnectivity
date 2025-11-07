@@ -8,15 +8,9 @@
 import Foundation
 import Combine
 
-public final class MPCMessageService {
+public final class MPCTextChatService: Codable {
     
-    private var session: GameSession
-    
-    init(session: GameSession) {
-        self.session = session
-    }
-    
-    @Published private var messages: [TextPayload] = []
+    private var messages: [TextPayload] = []
     
     public func getMessages() -> [String] {
         messages.compactMap { "[\($0.sender)] \($0.message)" }

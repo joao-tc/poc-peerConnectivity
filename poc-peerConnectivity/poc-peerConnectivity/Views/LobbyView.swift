@@ -55,7 +55,7 @@ struct LobbyView: View {
             session.notificationHandler = self
         }
         .onDisappear {
-            session.disconnect()
+//            session.disconnect()
         }
     }
 }

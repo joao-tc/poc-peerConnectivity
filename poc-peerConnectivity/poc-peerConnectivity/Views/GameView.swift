@@ -16,6 +16,8 @@ struct GameView: View {
     }
     
     @State private var currentMessage: String = ""
+    
+    @State private var refreshID = UUID()
 
     var body: some View {
 
@@ -23,7 +25,7 @@ struct GameView: View {
             Text("IN GAME")
                 .font(.largeTitle)
 
-            ForEach(session.messageService?.getMessages() ?? [], id: \.self) {
+            ForEach(session.textChatService?.getMessages() ?? [], id: \.self) {
                 message in
                 Text(message)
                     .font(.body)
@@ -41,7 +43,26 @@ struct GameView: View {
                         currentMessage = ""
                     }
                 }
+                .padding(16)
             }
+        }
+        .padding(16)
+        .onAppear {
+            session.notificationHandler = self
+        }
+        .id(refreshID)
+    }
+}
+
+extension GameView: MPCNotificationDelegate {
+    func notify(_ response: MPCNotifications) {
+        print("Received notification: \(response)")
+        
+        switch(response) {
+        case .refresh:
+            refreshID = UUID()
+            
+        default: break
         }
     }
 }

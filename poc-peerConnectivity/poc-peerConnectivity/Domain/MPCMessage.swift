@@ -11,6 +11,7 @@ public enum MPCMessage: Codable {
     case text(TextPayload)
     case game(GamePayload)
     case notification(NotificationPayLoad)
+    case textChatService(TextChatServicePayload)
 }
 
 public struct TextPayload: Codable {
@@ -25,4 +26,8 @@ public struct GamePayload: Codable {
 
 public struct NotificationPayLoad: Codable {
     public let notification: MPCNotifications
+}
+
+public struct TextChatServicePayload: Codable {
+    public let service: MPCTextChatService
 }

@@ -10,13 +10,13 @@ import SwiftUI
 
 struct HostView: View {
 
-    @ObservedObject private var session: GameSession
+    @StateObject private var session: GameSession
 
     private var username: String
 
     public init(username: String) {
         self.username = username
-        self.session = GameSession(username: username)
+        _session = StateObject(wrappedValue: GameSession(username: username))
     }
 
     @State private var password: String = ""
@@ -48,12 +48,7 @@ struct HostView: View {
                 Spacer()
 
                 Button("Start game") {
-                    guard !session.connectedPeers.isEmpty else { return }
-                    session.messageService = MPCMessageService(session: session)
-                    print("Host tryied to add messageService to session. Result = \(session.messageService != nil)")
-                    session.stopAdvertising()
-                    session.sendNotification(.nextView)
-                    gotoGame = true
+                    startGame()
                 }
             }
         }
@@ -68,9 +63,22 @@ struct HostView: View {
         }
         .onDisappear {
             session.stopAdvertising()
-//            session.disconnect()
             password = ""
         }
+    }
+    
+    private func startGame() {
+        guard !session.connectedPeers.isEmpty else { return }
+        let textChatService = MPCTextChatService()
+        session.textChatService = textChatService
+        print("Host tryied to add textChatService to session. Result = \(session.textChatService != nil)")
+        
+        let payload = TextChatServicePayload(service: textChatService)
+        let message = MPCMessage.textChatService(payload)
+        session.send(message: message)
+        session.stopAdvertising()
+        session.sendNotification(.nextView)
+        gotoGame = true
     }
 
     private func generatePassword(length: Int = 6) -> String {

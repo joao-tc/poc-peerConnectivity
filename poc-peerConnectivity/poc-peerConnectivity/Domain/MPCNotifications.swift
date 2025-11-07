@@ -12,4 +12,5 @@ public enum MPCNotifications: Codable {
     case previousView
     case wrongPassword
     case accepted
+    case refresh
 }
