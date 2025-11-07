@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum MPCResponsiveNotifications: Codable {
+public enum MPCNotifications: Codable {
     case nextView
     case previousView
     case wrongPassword

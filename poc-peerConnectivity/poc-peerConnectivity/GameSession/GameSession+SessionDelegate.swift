@@ -25,7 +25,7 @@ extension GameSession: MCSessionDelegate {
             case .connected:
                 print("[SESSION] Connected to \(peerID.displayName)")
                 print("[SESSION] Total peers connected: \(session.connectedPeers.count)")
-                self?.responsiveHandler?.notify(.accepted)
+                self?.notificationHandler?.notify(.accepted)
             case .connecting:
                 print("[SESSION] Connecting to \(peerID.displayName)...")
             case .notConnected:
@@ -58,8 +58,6 @@ extension GameSession: MCSessionDelegate {
                 
             case .notification(let not):
                 print("[\(getPeerName())] Received notification: \(not.notification)")
-//                guard seenNotifications.contains(not.id) else { return }
-//                seenNotifications.insert(not.id)
                 
                 notifyDelegate(not.notification)
             }

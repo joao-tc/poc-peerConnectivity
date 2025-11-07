@@ -52,7 +52,7 @@ struct JoinView: View {
             }
             .padding(16)
             .onAppear {
-                session.responsiveHandler = self
+                session.notificationHandler = self
                 session.startBrowsing()
                 password = ""
             }
@@ -72,8 +72,8 @@ struct JoinView: View {
     }
 }
 
-extension JoinView: MPCResponsiveDelegate {
-    func notify(_ response: MPCResponsiveNotifications) {
+extension JoinView: MPCNotificationDelegate {
+    func notify(_ response: MPCNotifications) {
         switch response {
         case .accepted:
             gotoLobby = true

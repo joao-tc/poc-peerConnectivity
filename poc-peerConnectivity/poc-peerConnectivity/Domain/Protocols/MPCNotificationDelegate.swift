@@ -7,6 +7,6 @@
 
 import Foundation
 
-public protocol MPCResponsiveDelegate {
-    func notify(_ response: MPCResponsiveNotifications) -> Void
+public protocol MPCNotificationDelegate {
+    func notify(_ response: MPCNotifications) -> Void
 }

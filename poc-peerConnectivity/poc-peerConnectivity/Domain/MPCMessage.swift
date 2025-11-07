@@ -24,6 +24,5 @@ public struct GamePayload: Codable {
 }
 
 public struct NotificationPayLoad: Codable {
-    public var id = UUID()
-    public let notification: MPCResponsiveNotifications
+    public let notification: MPCNotifications
 }

@@ -37,7 +37,7 @@ struct GameView: View {
                         .textFieldStyle(.roundedBorder)
                     
                     Button("Send") {
-                        session.messageService?.addMessage(currentMessage, from: session.getPeerName())
+                        session.send(text: currentMessage, from: session.getPeerName())
                         currentMessage = ""
                     }
                 }

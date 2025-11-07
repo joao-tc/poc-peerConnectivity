@@ -52,7 +52,7 @@ struct LobbyView: View {
             GameView(session: session)
         }
         .onAppear {
-            session.responsiveHandler = self
+            session.notificationHandler = self
         }
         .onDisappear {
             session.disconnect()
@@ -60,8 +60,8 @@ struct LobbyView: View {
     }
 }
 
-extension LobbyView: MPCResponsiveDelegate {
-    func notify(_ response: MPCResponsiveNotifications) {
+extension LobbyView: MPCNotificationDelegate {
+    func notify(_ response: MPCNotifications) {
         switch(response) {
         case .nextView:
             gotoGame = true

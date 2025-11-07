@@ -50,6 +50,7 @@ struct HostView: View {
                 Button("Start game") {
                     guard !session.connectedPeers.isEmpty else { return }
                     session.messageService = MPCMessageService(session: session)
+                    print("Host tryied to add messageService to session. Result = \(session.messageService != nil)")
                     session.stopAdvertising()
                     session.sendNotification(.nextView)
                     gotoGame = true

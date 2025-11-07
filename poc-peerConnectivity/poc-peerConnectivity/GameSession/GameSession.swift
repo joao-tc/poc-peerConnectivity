@@ -38,8 +38,7 @@ public final class GameSession: NSObject, ObservableObject {
     private var browser: MCNearbyServiceBrowser?
 
     // Services and handlers
-    public var responsiveHandler: MPCResponsiveDelegate?
-    internal var seenNotifications = Set<UUID>()
+    public var notificationHandler: MPCNotificationDelegate?
     public var messageService: MPCMessageService?
     
     // initializers
@@ -68,6 +67,12 @@ public final class GameSession: NSObject, ObservableObject {
             print("Data sent")
         }
     }
+    
+    public func send(text: String, from user: String) {
+        print("[\(user)] Trying to send text message: \(text)")
+        print("Current session has messageService? \(messageService != nil)")
+        messageService?.addMessage(text, from: user)
+    }
 
     public func setHostPassword(_ password: String) {
         hostPassword = password
@@ -81,11 +86,11 @@ public final class GameSession: NSObject, ObservableObject {
         session.disconnect()
     }
     
-    public func notifyDelegate(_ notification: MPCResponsiveNotifications) {
-        responsiveHandler?.notify(notification)
+    public func notifyDelegate(_ notification: MPCNotifications) {
+        notificationHandler?.notify(notification)
     }
     
-    public func sendNotification(_ notification: MPCResponsiveNotifications) {
+    public func sendNotification(_ notification: MPCNotifications) {
         let payLoad = NotificationPayLoad(notification: notification)
         let message = MPCMessage.notification(payLoad)
         send(message: message)
