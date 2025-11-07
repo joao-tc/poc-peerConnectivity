@@ -20,12 +20,13 @@ struct HostView: View {
     }
 
     @State private var password: String = ""
+    @State private var gotoChat: Bool = false
     @State private var gotoGame: Bool = false
 
     var body: some View {
         NavigationStack {
             VStack {
-                Text("Hosting Game")
+                Text("Hosting Session")
                     .font(.title2)
 
                 Spacer()
@@ -47,12 +48,23 @@ struct HostView: View {
                 Spacer()
                 Spacer()
 
+                Button("Start chat") {
+                    startChat()
+                }
+                .buttonStyle(.borderedProminent)
+                .frame(width: .infinity)
+                
                 Button("Start game") {
                     startGame()
                 }
+                .buttonStyle(.borderedProminent)
+                .frame(width: .infinity)
             }
         }
         .padding(16)
+        .navigationDestination(isPresented: $gotoChat) {
+            ChatView(session: session)
+        }
         .navigationDestination(isPresented: $gotoGame) {
             GameView(session: session)
         }
@@ -67,17 +79,25 @@ struct HostView: View {
         }
     }
     
-    private func startGame() {
+    private func startChat() {
         guard !session.connectedPeers.isEmpty else { return }
         let textChatService = MPCTextChatService()
         session.textChatService = textChatService
-        print("Host tryied to add textChatService to session. Result = \(session.textChatService != nil)")
+//        print("Host tryied to add textChatService to session. Result = \(session.textChatService != nil)")
         
         let payload = TextChatServicePayload(service: textChatService)
         let message = MPCMessage.textChatService(payload)
         session.send(message: message)
         session.stopAdvertising()
         session.sendNotification(.nextView)
+        gotoChat = true
+    }
+    
+    private func startGame() {
+        guard !session.connectedPeers.isEmpty else { return }
+        
+        session.stopAdvertising()
+        session.sendNotification(.nextView2)
         gotoGame = true
     }
 

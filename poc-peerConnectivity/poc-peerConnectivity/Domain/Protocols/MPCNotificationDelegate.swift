@@ -8,5 +8,5 @@
 import Foundation
 
 public protocol MPCNotificationDelegate {
-    func notify(_ response: MPCNotifications) -> Void
+    func notify(_ notification: MPCNotifications) -> Void
 }

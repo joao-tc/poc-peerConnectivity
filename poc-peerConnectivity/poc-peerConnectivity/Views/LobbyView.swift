@@ -13,6 +13,7 @@ struct LobbyView: View {
     
     private let password: String
     
+    @State private var gotoChat: Bool = false
     @State private var gotoGame: Bool = false
     
     init(session: GameSession, password: String) {
@@ -48,23 +49,27 @@ struct LobbyView: View {
             }
         }
         .padding(16)
+        .navigationDestination(isPresented: $gotoChat) {
+            ChatView(session: session)
+        }
         .navigationDestination(isPresented: $gotoGame) {
             GameView(session: session)
         }
         .onAppear {
             session.notificationHandler = self
         }
-        .onDisappear {
-//            session.disconnect()
-        }
     }
 }
 
 extension LobbyView: MPCNotificationDelegate {
-    func notify(_ response: MPCNotifications) {
-        switch(response) {
+    func notify(_ notification: MPCNotifications) {
+        switch(notification) {
         case .nextView:
+            gotoChat = true
+            
+        case .nextView2:
             gotoGame = true
+            
         default:
             break
         }

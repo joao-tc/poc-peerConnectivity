@@ -9,6 +9,7 @@ import Foundation
 
 public enum MPCNotifications: Codable {
     case nextView
+    case nextView2
     case previousView
     case wrongPassword
     case accepted

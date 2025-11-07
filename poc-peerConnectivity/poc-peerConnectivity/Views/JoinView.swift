@@ -73,8 +73,8 @@ struct JoinView: View {
 }
 
 extension JoinView: MPCNotificationDelegate {
-    func notify(_ response: MPCNotifications) {
-        switch response {
+    func notify(_ notification: MPCNotifications) {
+        switch notification {
         case .accepted:
             gotoLobby = true
         case .wrongPassword:

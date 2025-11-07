@@ -2,67 +2,40 @@
 //  GameView.swift
 //  poc-peerConnectivity
 //
-//  Created by João Pedro Teixeira de Carvalho on 06/11/25.
+//  Created by João Pedro Teixeira de Carvalho on 07/11/25.
 //
 
 import SwiftUI
+import SpriteKit
 
 struct GameView: View {
-
+    
     @ObservedObject private var session: GameSession
-
+    
     public init(session: GameSession) {
         self.session = session
     }
     
-    @State private var currentMessage: String = ""
+    var scene: SKScene {
+        let scene = PhysicsScene()
+        scene.size = UIScreen.main.bounds.size
+//        scene.size = UIScreen.scale
+        scene.scaleMode = .resizeFill
+        return scene
+    }
     
-    @State private var refreshID = UUID()
-
     var body: some View {
-
-        VStack {
-            Text("IN GAME")
-                .font(.largeTitle)
-
-            ForEach(session.textChatService?.getMessages() ?? [], id: \.self) {
-                message in
-                Text(message)
-                    .font(.body)
-            }
-
-            VStack {
-                Text("Chat with your friends!")
-                
-                HStack {
-                    TextField("Write here", text: $currentMessage)
-                        .textFieldStyle(.roundedBorder)
-                    
-                    Button("Send") {
-                        session.send(text: currentMessage, from: session.getPeerName())
-                        currentMessage = ""
-                    }
-                }
-                .padding(16)
-            }
-        }
-        .padding(16)
-        .onAppear {
-            session.notificationHandler = self
-        }
-        .id(refreshID)
+        SpriteView(scene: scene, debugOptions: [.showsPhysics])
+            .ignoresSafeArea()
     }
 }
 
 extension GameView: MPCNotificationDelegate {
-    func notify(_ response: MPCNotifications) {
-        print("Received notification: \(response)")
-        
-        switch(response) {
-        case .refresh:
-            refreshID = UUID()
-            
-        default: break
+    func notify(_ notification: MPCNotifications) {
+        switch(notification) {
+        default:
+            break
         }
     }
 }
+
