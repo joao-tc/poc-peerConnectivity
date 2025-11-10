@@ -11,28 +11,41 @@ import SpriteKit
 struct GameView: View {
     
     @ObservedObject private var session: GameSession
+    @State private var scene: PhysicsScene
     
     public init(session: GameSession) {
         self.session = session
-    }
-    
-    var scene: SKScene {
-        let scene = PhysicsScene()
-        scene.size = UIScreen.main.bounds.size
-//        scene.size = UIScreen.scale
-        scene.scaleMode = .resizeFill
-        return scene
+        let initialSize = UIScreen.main.bounds.size
+        _scene = State(wrappedValue: PhysicsScene(session: session, size: initialSize))
     }
     
     var body: some View {
-        SpriteView(scene: scene, debugOptions: [.showsPhysics])
-            .ignoresSafeArea()
+        
+        ZStack {
+            SpriteView(scene: scene, debugOptions: [.showsPhysics])
+                .ignoresSafeArea()
+            
+            VStack {
+                Spacer()
+                Button("Add ball") {
+                    scene.spawnBall()
+                }
+            }
+        }
+        .onAppear {
+            session.notificationHandler = self
+        }
     }
 }
 
 extension GameView: MPCNotificationDelegate {
     func notify(_ notification: MPCNotifications) {
         switch(notification) {
+        
+        case .gameMove(let payload):
+            let point: CGPoint = .init(x: payload.x * -1, y: payload.y)
+            scene.spawnBall(at: point)
+            
         default:
             break
         }

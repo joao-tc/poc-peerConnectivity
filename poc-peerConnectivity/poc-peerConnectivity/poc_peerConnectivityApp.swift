@@ -11,8 +11,8 @@ import SwiftUI
 struct poc_peerConnectivityApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
-//            GameView(session: GameSession(username: "Teste"))
+//            ContentView()
+            GameView(session: GameSession(username: "Teste"))
         }
     }
 }

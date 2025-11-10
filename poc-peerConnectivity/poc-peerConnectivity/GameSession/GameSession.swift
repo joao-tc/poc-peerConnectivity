@@ -16,7 +16,7 @@ public final class GameSession: NSObject, ObservableObject {
     // Peers
     @Published public var connectedPeers = [MCPeerID]()
     @Published public var possiblePeers = [MCPeerID]()
-    internal var discoveryInfoByPeer: [MCPeerID: [String: String]] = [:]
+    var discoveryInfoByPeer: [MCPeerID: [String: String]] = [:]
 
     // Password
     @Published public var hostPassword: String?
@@ -27,7 +27,7 @@ public final class GameSession: NSObject, ObservableObject {
     
     // Session info
     private let serviceType = "test"
-    internal var session: MCSession!
+    var session: MCSession!
     
     // Advertiser
     private var advertiser: MCNearbyServiceAdvertiser?
