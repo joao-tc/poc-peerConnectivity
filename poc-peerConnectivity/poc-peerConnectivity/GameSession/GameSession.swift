@@ -41,7 +41,7 @@ public final class GameSession: NSObject, ObservableObject {
     public var notificationHandler: MPCNotificationDelegate?
     public var textChatService: MPCTextChatService?
     
-    // initializers
+    
     public init(username: String) {
         var safeName = ""
         safeName = username.isEmpty ? UIDevice.current.name : username
@@ -54,28 +54,7 @@ public final class GameSession: NSObject, ObservableObject {
         )
         session.delegate = self
     }
-
-    public func send(message data: MPCMessage) {
-        guard !session.connectedPeers.isEmpty else { return }
-        if let data = try? JSONEncoder().encode(data) {
-            try? session.send(
-                data,
-                toPeers: session.connectedPeers,
-                with: .reliable
-            )
-        }
-    }
     
-    public func send(text: String, from user: String) {
-        print("[\(user)] Trying to send text message: \(text)")
-        print("Current session has messageService? \(textChatService != nil)")
-        
-        textChatService?.addMessage(text, from: user)
-        
-        let payload = TextPayload(message: text, sender: user)
-        let message = MPCMessage.text(payload)
-        send(message: message)
-    }
 
     public func setHostPassword(_ password: String) {
         hostPassword = password
@@ -88,18 +67,12 @@ public final class GameSession: NSObject, ObservableObject {
     public func disconnect() {
         session.disconnect()
     }
-    
-    public func notifyDelegate(_ notification: MPCNotifications) {
-        notificationHandler?.notify(notification)
-    }
-    
-    public func sendNotification(_ notification: MPCNotifications) {
-        let payLoad = NotificationPayLoad(notification: notification)
-        let message = MPCMessage.notification(payLoad)
-        send(message: message)
-        print("[\(getPeerName())] Sending notification: \(notification)")
-    }
+}
 
+
+// MARK: - Sending funcs
+extension GameSession {
+    // Invites
     public func sendInvite(to peerID: MCPeerID) {
         browser?.invitePeer(peerID, to: session, withContext: nil, timeout: 10)
     }
@@ -118,6 +91,45 @@ public final class GameSession: NSObject, ObservableObject {
         
         let data = try? JSONEncoder().encode(password)
         browser?.invitePeer(peerID, to: session, withContext: data, timeout: 10)
+    }
+    
+    // Send generic message type
+    public func send(message data: MPCMessage) {
+        guard !session.connectedPeers.isEmpty else { return }
+        if let data = try? JSONEncoder().encode(data) {
+            try? session.send(
+                data,
+                toPeers: session.connectedPeers,
+                with: .reliable
+            )
+        }
+    }
+    
+    // Send text message
+    public func send(text: String, from user: String) {
+        print("[\(user)] Trying to send text message: \(text)")
+        print("Current session has messageService? \(textChatService != nil)")
+        
+        textChatService?.addMessage(text, from: user)
+        
+        let payload = TextPayload(message: text, sender: user)
+        let message = MPCMessage.text(payload)
+        send(message: message)
+    }
+}
+
+
+// MARK: - NNotification funcs
+extension GameSession {
+    public func notifyDelegate(_ notification: MPCNotifications) {
+        notificationHandler?.notify(notification)
+    }
+    
+    public func sendNotification(_ notification: MPCNotifications) {
+        let payLoad = NotificationPayLoad(notification: notification)
+        let message = MPCMessage.notification(payLoad)
+        send(message: message)
+        print("[\(getPeerName())] Sending notification: \(notification)")
     }
 }
 
