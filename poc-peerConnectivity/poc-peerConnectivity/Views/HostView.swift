@@ -69,7 +69,7 @@ struct HostView: View {
             GameView(session: session)
         }
         .onAppear {
-            password = generatePassword(length: 1)
+            password = generatePassword(length: 6)
             session.setHostPassword(password)
             session.startAdvertising()
         }
