@@ -13,6 +13,14 @@ public class Ball: GKEntity {
     
     private var ballSize: CGFloat = 40
     
+    public var node: SKNode? {
+        component(ofType: GKSKNodeComponent.self)?.node
+    }
+    
+    public var body: SKPhysicsBody? {
+        node?.physicsBody
+    }
+    
     override public init() {
         super.init()
 
@@ -32,6 +40,9 @@ public class Ball: GKEntity {
         node.physicsBody?.angularDamping = 10
         
         addComponent(GKSKNodeComponent(node: node))
+        
+        let draggableComponent = DraggableComponent()
+        addComponent(draggableComponent)
     }
         
     required init?(coder: NSCoder) {

@@ -22,6 +22,7 @@ public struct TextPayload: Codable {
 public struct GamePayload: Codable {
     public let x: CGFloat
     public let y: CGFloat
+    public let side: EdgeSide
 }
 
 public struct NotificationPayLoad: Codable {

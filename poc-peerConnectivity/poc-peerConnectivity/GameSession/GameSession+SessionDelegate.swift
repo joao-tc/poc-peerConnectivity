@@ -56,7 +56,7 @@ extension GameSession: MCSessionDelegate {
                 notifyDelegate(.refresh)
             
             case .game(let payload):
-                print("[\(peerID.displayName)] X: \(payload.x) Y: \(payload.y)")
+                print("[\(peerID.displayName)] Parcel comming from the \(payload.side)")
                 notifyDelegate(.gameMove(payload))
                 
             case .notification(let payload):

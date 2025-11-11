@@ -198,11 +198,10 @@ public final class PhysicsScene: SKScene {
 
     private func sendParcel(
         side: EdgeSide,
-        node: SKNode,
-        physicsBody: SKPhysicsBody
+        node: SKNode
     ) {
         node.removeFromParent()
-        let payload = GamePayload(x: node.position.x * -1, y: node.position.y)
+        let payload = GamePayload(x: node.position.x * -1, y: node.position.y, side: side)
         let message = MPCMessage.game(payload)
         session.send(message: message)
     }
@@ -218,6 +217,14 @@ public final class PhysicsScene: SKScene {
         let ball = Ball()
         ball.setPosition(to: point)
         entityManager?.add(entity: ball)
+    }
+    
+    public func spawnBall(at point: CGPoint, from side: EdgeSide) {
+        let ball = Ball()
+        ball.setPosition(to: point)
+        entityManager?.add(entity: ball)
+        let direction: CGFloat = side == .right ? 1 : -1
+        ball.body?.applyForce(.init(dx: 5000 * direction, dy: 0))
     }
 }
 
@@ -242,6 +249,6 @@ extension PhysicsScene: SKPhysicsContactDelegate {
         let isLeft =
             sensorBody.categoryBitMask & PhysicsCategory.sensorRight != 0
         let side: EdgeSide = isLeft ? .left : .right
-        sendParcel(side: side, node: parcelNode, physicsBody: parcelBody)
+        sendParcel(side: side, node: parcelNode)
     }
 }

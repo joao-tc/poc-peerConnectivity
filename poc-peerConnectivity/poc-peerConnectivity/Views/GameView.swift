@@ -44,7 +44,7 @@ extension GameView: MPCNotificationDelegate {
         
         case .gameMove(let payload):
             let point: CGPoint = .init(x: payload.x * -1, y: payload.y)
-            scene.spawnBall(at: point)
+            scene.spawnBall(at: point, from: payload.side)
             
         default:
             break
