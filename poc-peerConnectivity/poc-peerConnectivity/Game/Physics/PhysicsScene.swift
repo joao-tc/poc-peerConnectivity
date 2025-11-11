@@ -8,6 +8,8 @@
 import SpriteKit
 import GameplayKit
 
+public enum EdgeSide: String, Codable { case left, right }
+
 public final class PhysicsScene: SKScene {
 
     private var session: GameSession
@@ -34,12 +36,9 @@ public final class PhysicsScene: SKScene {
         backgroundColor = .clear
         scaleMode = .resizeFill
         physicsWorld.gravity = .init(dx: 0, dy: 9.6)
-        physicsWorld.contactDelegate = self
 
-        physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
-        physicsBody?.categoryBitMask = PhysicsCategory.edge
-
-        addSideSensors(withThickness: 8)
+//        physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
+//        physicsBody?.categoryBitMask = PhysicsCategory.edge
         
         self.entityManager = EntityManager(scene: self)
         
@@ -112,6 +111,76 @@ public final class PhysicsScene: SKScene {
     // MARK: -
 
     override public func update(_ currentTime: TimeInterval) {
+        handleMovementUpdate()
+        
+        guard let entities = entityManager?.getEntities() else { return }
+        
+        for entity in entities {
+            if let node = entity.component(ofType: GKSKNodeComponent.self)?.node {
+                if let side = exitSide(for: node) {
+                    print("Ball from \(session.getPeerName()) exited to the \(side)")
+                    sendParcel(side: side, node: node, entity: entity)
+                }
+            }
+        }
+    }
+
+    public override func didChangeSize(_ oldSize: CGSize) {
+        super.didChangeSize(oldSize)
+        physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
+        physicsBody?.categoryBitMask = PhysicsCategory.edge
+        // Rebuild sensors to match new size (or update their frames)
+        children.filter { $0.name?.hasPrefix("sensor.") == true }.forEach {
+            $0.removeFromParent()
+        }
+    }
+}
+
+// MARK: - Send and Spawn functions
+extension PhysicsScene {
+    private func sendParcel(
+        side: EdgeSide,
+        node: SKNode,
+        entity: GKEntity
+    ) {
+        entityManager?.remove(entity: entity)
+        let dxFromCenter = node.position.x - frame.midX
+        let mirroredDx = -dxFromCenter
+
+        let payload = GamePayload(
+            x: mirroredDx,
+            y: node.position.y,
+            side: side
+        )
+        let message = MPCMessage.game(payload)
+        session.send(message: message)
+    }
+
+    public func spawnBall() {
+        let ball = Ball()
+        let point: CGPoint = .init(x: frame.midX, y: frame.midY)
+        ball.setPosition(to: point)
+        entityManager?.add(entity: ball)
+    }
+    
+    public func spawnBall(at point: CGPoint) {
+        let ball = Ball()
+        ball.setPosition(to: point)
+        entityManager?.add(entity: ball)
+    }
+    
+    public func spawnBall(at point: CGPoint, goingTo side: EdgeSide) {
+        let ball = Ball()
+        ball.setPosition(to: point)
+        entityManager?.add(entity: ball)
+        let direction: CGFloat = side == .right ? 1 : -1
+        ball.body?.applyForce(.init(dx: 7500 * direction, dy: 0))
+    }
+}
+
+// MARK: - Parcel movement
+extension PhysicsScene {
+    private func handleMovementUpdate() {
         guard
             let manager = entityManager,
             let entity = currentDrag,
@@ -130,7 +199,7 @@ public final class PhysicsScene: SKScene {
         }
 
         let stiffness: CGFloat = 20
-        let damping: CGFloat = 12
+        let damping: CGFloat = 10
 
         let desiredVx = dx * stiffness
         let desiredVy = dy * stiffness
@@ -141,7 +210,7 @@ public final class PhysicsScene: SKScene {
         let force = CGVector(dx: steerX * damping, dy: steerY * damping)
         body.applyForce(force)
 
-        let maxSpeed: CGFloat = 600
+        let maxSpeed: CGFloat = 1000
         var velocity = body.velocity
         let speed = hypot(velocity.dx, velocity.dy)
         if speed > maxSpeed {
@@ -150,105 +219,20 @@ public final class PhysicsScene: SKScene {
             body.velocity = velocity
         }
     }
-
-    private func addSideSensors(withThickness thickness: CGFloat) {
-        // Left sensor
-        let leftRect = CGRect(
-            x: frame.minX - thickness,
-            y: frame.minY,
-            width: thickness,
-            height: frame.height
-        )
-        let leftNode = SKNode()
-        leftNode.name = "sensor.left"
-        leftNode.physicsBody = SKPhysicsBody(edgeLoopFrom: leftRect)
-        leftNode.physicsBody?.isDynamic = false
-        leftNode.physicsBody?.categoryBitMask = PhysicsCategory.sensorLeft
-        leftNode.physicsBody?.collisionBitMask = 0
-        leftNode.physicsBody?.contactTestBitMask = 0
-        addChild(leftNode)
-
-        // Right sensor
-        let rightRect = CGRect(
-            x: frame.maxX,
-            y: frame.minY,
-            width: thickness,
-            height: frame.height
-        )
-        let rightNode = SKNode()
-        rightNode.name = "sensor.right"
-        rightNode.physicsBody = SKPhysicsBody(edgeLoopFrom: rightRect)
-        rightNode.physicsBody?.isDynamic = false
-        rightNode.physicsBody?.categoryBitMask = PhysicsCategory.sensorRight
-        rightNode.physicsBody?.collisionBitMask = 0
-        rightNode.physicsBody?.contactTestBitMask = 0
-        addChild(rightNode)
-    }
-
-    public override func didChangeSize(_ oldSize: CGSize) {
-        super.didChangeSize(oldSize)
-        physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
-        physicsBody?.categoryBitMask = PhysicsCategory.edge
-        // Rebuild sensors to match new size (or update their frames)
-        children.filter { $0.name?.hasPrefix("sensor.") == true }.forEach {
-            $0.removeFromParent()
+    
+    private func exitSide(for node: SKNode, minExitVelocity velocity: CGFloat = 1) -> EdgeSide? {
+        guard let body = node.physicsBody else { return nil }
+        
+        let accFrame = node.calculateAccumulatedFrame()
+        
+        if accFrame.maxX < frame.minX + 20, body.velocity.dx < -velocity {
+            return .left
         }
-        addSideSensors(withThickness: 8)
-    }
-
-    private func sendParcel(
-        side: EdgeSide,
-        node: SKNode
-    ) {
-        node.removeFromParent()
-        let payload = GamePayload(x: node.position.x * -1, y: node.position.y, side: side)
-        let message = MPCMessage.game(payload)
-        session.send(message: message)
-    }
-
-    public func spawnBall() {
-        let ball = Ball()
-        let point: CGPoint = .init(x: frame.midX, y: frame.midY)
-        ball.setPosition(to: point)
-        entityManager?.add(entity: ball)
-    }
-    
-    public func spawnBall(at point: CGPoint) {
-        let ball = Ball()
-        ball.setPosition(to: point)
-        entityManager?.add(entity: ball)
-    }
-    
-    public func spawnBall(at point: CGPoint, from side: EdgeSide) {
-        let ball = Ball()
-        ball.setPosition(to: point)
-        entityManager?.add(entity: ball)
-        let direction: CGFloat = side == .right ? 1 : -1
-        ball.body?.applyForce(.init(dx: 5000 * direction, dy: 0))
-    }
-}
-
-// MARK: - Collision Delegate
-public enum EdgeSide: String, Codable { case left, right }
-
-extension PhysicsScene: SKPhysicsContactDelegate {
-    public func didBegin(_ contact: SKPhysicsContact) {
-        let bodies = (contact.bodyA, contact.bodyB)
-        guard
-            let parcelBody = [bodies.0, bodies.1].first(where: {
-                $0.categoryBitMask & PhysicsCategory.parcel != 0
-            }),
-            let sensorBody = [bodies.0, bodies.1].first(where: {
-                $0.categoryBitMask
-                    & (PhysicsCategory.sensorLeft | PhysicsCategory.sensorRight)
-                    != 0
-            }),
-            let parcelNode = parcelBody.node as? SKShapeNode
-        else { return }
-
-        let isLeft =
-            sensorBody.categoryBitMask & PhysicsCategory.sensorRight != 0
-        let side: EdgeSide = isLeft ? .left : .right
-        sendParcel(side: side, node: parcelNode)
+        
+        if accFrame.minX > frame.maxX - 20, body.velocity.dx > velocity {
+            return .right
+        }
+        
+        return nil
     }
 }

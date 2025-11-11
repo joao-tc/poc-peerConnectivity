@@ -52,7 +52,7 @@ struct LobbyView: View {
         .navigationDestination(isPresented: $gotoChat) {
             ChatView(session: session)
         }
-        .navigationDestination(isPresented: $gotoGame) {
+        .fullScreenCover(isPresented: $gotoGame) {
             GameView(session: session)
         }
         .onAppear {

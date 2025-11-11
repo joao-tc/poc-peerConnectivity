@@ -22,7 +22,7 @@ struct GameView: View {
     var body: some View {
         
         ZStack {
-            SpriteView(scene: scene, debugOptions: [.showsPhysics])
+            SpriteView(scene: scene, debugOptions: [.showsPhysics, .showsNodeCount])
                 .ignoresSafeArea()
             
             VStack {
@@ -40,12 +40,19 @@ struct GameView: View {
 
 extension GameView: MPCNotificationDelegate {
     func notify(_ notification: MPCNotifications) {
-        switch(notification) {
-        
+        switch notification {
         case .gameMove(let payload):
-            let point: CGPoint = .init(x: payload.x * -1, y: payload.y)
-            scene.spawnBall(at: point, from: payload.side)
-            
+
+            let dx = CGFloat(payload.x)
+            let sign: CGFloat = dx >= 0 ? 1 : -1
+
+            let newDistance = max(0, abs(dx) - 21)
+
+            let newX = scene.frame.midX + sign * newDistance
+
+            let point = CGPoint(x: newX, y: CGFloat(payload.y))
+            scene.spawnBall(at: point, goingTo: payload.side)
+
         default:
             break
         }
