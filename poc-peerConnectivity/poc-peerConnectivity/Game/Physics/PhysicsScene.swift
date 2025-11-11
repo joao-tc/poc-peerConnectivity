@@ -12,10 +12,10 @@ public enum EdgeSide: String, Codable { case left, right }
 
 public final class PhysicsScene: SKScene {
 
-    private var session: GameSession
+    private var session: MPCConnection
     private var entityManager: EntityManager?
 
-    public init(session: GameSession, size: CGSize) {
+    public init(session: MPCConnection, size: CGSize) {
         self.session = session
         super.init(size: size)
     }

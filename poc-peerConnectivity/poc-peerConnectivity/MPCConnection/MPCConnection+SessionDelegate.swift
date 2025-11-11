@@ -1,5 +1,5 @@
 //
-//  GameSession+SessionDelegate.swift
+//  MPCConnection+SessionDelegate.swift
 //  poc-peerConnectivity
 //
 //  Created by João Pedro Teixeira de Carvalho on 06/11/25.
@@ -8,7 +8,7 @@
 import Foundation
 import MultipeerConnectivity
 
-extension GameSession: MCSessionDelegate {
+extension MPCConnection: MCSessionDelegate {
 
     // Peer changed state
     public func session(

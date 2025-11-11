@@ -1,5 +1,5 @@
 //
-//  GameSession+AdvertiserDelegate.swift
+//  MPCConnection+AdvertiserDelegate.swift
 //  poc-peerConnectivity
 //
 //  Created by João Pedro Teixeira de Carvalho on 06/11/25.
@@ -8,7 +8,7 @@
 import Foundation
 import MultipeerConnectivity
 
-extension GameSession: MCNearbyServiceAdvertiserDelegate {
+extension MPCConnection: MCNearbyServiceAdvertiserDelegate {
     
     public func advertiser(
         _ advertiser: MCNearbyServiceAdvertiser,

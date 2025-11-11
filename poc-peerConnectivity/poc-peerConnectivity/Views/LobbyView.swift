@@ -9,14 +9,14 @@ import SwiftUI
 import MultipeerConnectivity
 
 struct LobbyView: View {
-    @ObservedObject private var session: GameSession
+    @ObservedObject private var session: MPCConnection
     
     private let password: String
     
     @State private var gotoChat: Bool = false
     @State private var gotoGame: Bool = false
     
-    init(session: GameSession, password: String) {
+    init(session: MPCConnection, password: String) {
         self.session = session
         self.password = password
     }

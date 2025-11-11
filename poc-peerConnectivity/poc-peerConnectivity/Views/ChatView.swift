@@ -9,9 +9,9 @@ import SwiftUI
 
 struct ChatView: View {
 
-    @ObservedObject private var session: GameSession
+    @ObservedObject private var session: MPCConnection
 
-    public init(session: GameSession) {
+    public init(session: MPCConnection) {
         self.session = session
     }
     

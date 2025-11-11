@@ -10,10 +10,10 @@ import SpriteKit
 
 struct GameView: View {
     
-    @ObservedObject private var session: GameSession
+    @ObservedObject private var session: MPCConnection
     @State private var scene: PhysicsScene
     
-    public init(session: GameSession) {
+    public init(session: MPCConnection) {
         self.session = session
         let initialSize = UIScreen.main.bounds.size
         _scene = State(wrappedValue: PhysicsScene(session: session, size: initialSize))

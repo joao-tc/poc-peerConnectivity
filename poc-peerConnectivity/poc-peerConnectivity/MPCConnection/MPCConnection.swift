@@ -1,5 +1,5 @@
 //
-//  GameSession.swift
+//  MPCConnection.swift
 //  poc-peerConnectivity
 //
 //  Created by João Pedro Teixeira de Carvalho on 04/11/25.
@@ -11,7 +11,7 @@ import MultipeerConnectivity
 import SwiftUI
 import UIKit
 
-public final class GameSession: NSObject, ObservableObject {
+public final class MPCConnection: NSObject, ObservableObject {
     
     // Peers
     @Published public var connectedPeers = [MCPeerID]()
@@ -71,7 +71,7 @@ public final class GameSession: NSObject, ObservableObject {
 
 
 // MARK: - Sending funcs
-extension GameSession {
+extension MPCConnection {
     // Invites
     public func sendInvite(to peerID: MCPeerID) {
         browser?.invitePeer(peerID, to: session, withContext: nil, timeout: 10)
@@ -120,7 +120,7 @@ extension GameSession {
 
 
 // MARK: - NNotification funcs
-extension GameSession {
+extension MPCConnection {
     public func notifyDelegate(_ notification: MPCNotifications) {
         notificationHandler?.notify(notification)
     }
@@ -135,7 +135,7 @@ extension GameSession {
 
 
 // MARK: - Browser funcs
-extension GameSession {
+extension MPCConnection {
     public func startBrowsing() {
         print("[BROWSER] Starting browser...")
         print("[BROWSER] Device name: \(myPeerID.displayName)")
@@ -159,7 +159,7 @@ extension GameSession {
 
 
 // MARK: - Advertising funcs
-extension GameSession {
+extension MPCConnection {
     public func startAdvertising() {
         print("[ADVERTISER] Started advertising...")
         print("[ADVERTISER] Device name: \(myPeerID.displayName)")

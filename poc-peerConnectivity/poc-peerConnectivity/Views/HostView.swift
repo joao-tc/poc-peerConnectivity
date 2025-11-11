@@ -10,13 +10,13 @@ import SwiftUI
 
 struct HostView: View {
 
-    @StateObject private var session: GameSession
+    @StateObject private var session: MPCConnection
 
     private var username: String
 
     public init(username: String) {
         self.username = username
-        _session = StateObject(wrappedValue: GameSession(username: username))
+        _session = StateObject(wrappedValue: MPCConnection(username: username))
     }
 
     @State private var password: String = ""
