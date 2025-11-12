@@ -152,7 +152,6 @@ extension MPCConnection {
 
     public func stopBrowsing() {
         print("[BROWSER] Stoping browser")
-
         browser?.stopBrowsingForPeers()
     }
 }
@@ -196,7 +195,7 @@ extension MPCConnection {
 
     public func stopAdvertising() {
         print("[ADVERTISER] Stop advertising")
-
         advertiser?.stopAdvertisingPeer()
     }
 }
+
