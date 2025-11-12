@@ -52,10 +52,10 @@ public final class MPCConnection: NSObject, ObservableObject {
             securityIdentity: nil,
             encryptionPreference: .required
         )
-        session.delegate = self
+        // session.delegate = self
     }
     
-
+    /*
     public func setHostPassword(_ password: String) {
         hostPassword = password
 
@@ -197,5 +197,7 @@ extension MPCConnection {
         print("[ADVERTISER] Stop advertising")
         advertiser?.stopAdvertisingPeer()
     }
+     */
 }
+
 

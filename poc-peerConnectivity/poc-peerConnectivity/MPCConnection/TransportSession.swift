@@ -14,15 +14,20 @@ import CryptoKit
 public final class TransportSession: NSObject, TransportSessionProtocol {
     // Peers
     public private(set) var myPeerID: MCPeerID
-    public private(set) var connectedPeers: [MCPeerID]
+    public private(set) var connectedPeers: [MCPeerID] = []
+    fileprivate var possiblePeers: [MCPeerID] = []
     
     // Session parameters
     fileprivate let serviceType = "poc"
     fileprivate var session: MCSession!
     fileprivate var advertiser: MCNearbyServiceAdvertiser?
     fileprivate var browser: MCNearbyServiceBrowser?
+    fileprivate var textChatService: MPCTextChatService?
+    fileprivate var notificationHandler: MPCNotificationDelegate?
+    fileprivate var peerName: String
     
     // HMAC
+    fileprivate var hostPassword: String?
     fileprivate var currentNonce: String?
     fileprivate var currentProof: String?
     fileprivate var discoveryInfoByPeer: [MCPeerID: [String: String]] = [:]
@@ -34,34 +39,120 @@ public final class TransportSession: NSObject, TransportSessionProtocol {
     // Initializer
     public init(userName: String) {
         let safeName = userName.isEmpty ? UIDevice.current.systemName : userName
+        peerName = safeName
         myPeerID = MCPeerID(displayName: safeName)
         super.init()
         session = MCSession(peer: myPeerID, securityIdentity: nil, encryptionPreference: .required)
         session.delegate = self
     }
     
+    // Deinitializer
+    deinit {
+        advertiser?.stopAdvertisingPeer()
+        browser?.stopBrowsingForPeers()
+        session.disconnect()
+    }
+    
+    // Disconnect session
+    public func disconnect() {
+        session.disconnect()
+    }
+    
+    // Send data
+    public func send(_ data: Data, reliably: Bool = true) throws {
+        let mode: MCSessionSendDataMode = reliably ? .reliable : .unreliable
+        try session.send(data, toPeers: session.connectedPeers, with: mode)
+    }
+}
+
+
+// MARK: - Sending Funcs
+extension TransportSession {
+
+    // Invites
+    public func sendInvite(to peerID: MCPeerID) {
+        browser?.invitePeer(peerID, to: session, withContext: nil, timeout: 10)
+    }
+    
+    public func invite(_ peer: MCPeerID, withPassword password: String) {
+        if let info = discoveryInfoByPeer[peer],
+            let nonce = info["nonce"],
+            let expectedProof = info["proof"]
+        {
+            let computedProof = hmacSHA256Hex(key: password, message: nonce)
+
+            if computedProof != expectedProof {
+                return
+            }
+        }
+        
+        let data = try? JSONEncoder().encode(password)
+        browser?.invitePeer(peer, to: session, withContext: data, timeout: 10)
+    }
+    
+    // Send generic message type
+    public func send(message data: MPCMessage) {
+        guard !session.connectedPeers.isEmpty else { return }
+        
+        if let data = try? JSONEncoder().encode(data) {
+            try? session.send(
+                data,
+                toPeers: session.connectedPeers,
+                with: .reliable
+            )
+        }
+    }
+    
+    // Send text message
+    public func send(text: String, from user: String) {
+        print("[\(user)] Trying to send text message: \(text)")
+        print("Current session has messageService? \(textChatService != nil)")
+        
+        textChatService?.addMessage(text, from: user)
+        
+        let payload = TextPayload(message: text, sender: user)
+        let message = MPCMessage.text(payload)
+        send(message: message)
+    }
+}
+
+
+// MARK: - Notification Funcs
+extension TransportSession {
+    public func notifyDelegate(_ notification: MPCNotifications) {
+        notificationHandler?.notify(notification)
+    }
+    
+    public func sendNotification(_ notification: MPCNotifications) {
+        let payLoad = NotificationPayLoad(notification: notification)
+        let message = MPCMessage.notification(payLoad)
+        send(message: message)
+        print("[\(peerName)] Sending notification: \(notification)")
+    }
+}
+
+
+// MARK: - Advertising Funcs
+extension TransportSession {
+    
     // Start advertising with public nonce+proof for password authentication
     public func startAdvertising(withPassword password: String?) {
         print("[ADVERTISER] Started advertising...")
         print("[ADVERTISER] Device name: \(myPeerID.displayName)")
         print("[ADVERTISER] Service type: \(serviceType)")
-
+        
+        hostPassword = password
         let nonce = randomNonce()
         currentNonce = nonce
-        if let password = password {
-            currentProof = hmacSHA256Hex(key: password, message: nonce)
-        } else {
-            currentProof = nil
-        }
+        currentProof = password.map { hmacSHA256Hex(key: $0, message: nonce) }
 
         let info: [String: String]? = {
+            guard let nonce = currentNonce else { return nil }
+            
             if let nonce = currentNonce, let proof = currentProof {
                 return ["nonce": nonce, "proof": proof]
-            } else if let nonce = currentNonce {
-                return ["nonce": nonce]
-            } else {
-                return nil
             }
+            return ["nonce": nonce]
         }()
 
         advertiser = MCNearbyServiceAdvertiser(
@@ -79,7 +170,13 @@ public final class TransportSession: NSObject, TransportSessionProtocol {
     public func stopAdvertising() {
         print("[ADVERTISER] Stop advertising")
         advertiser?.stopAdvertisingPeer()
+        advertiser = nil
     }
+}
+
+
+// MARK: - Browsing funcs
+extension TransportSession {
     
     // Start browsing
     public func startBrowsing() {
@@ -98,36 +195,11 @@ public final class TransportSession: NSObject, TransportSessionProtocol {
     
     // Stop browsing
     public func stopBrowsing() {
-        print("[BROWSER] Stoping browser")
+        print("[BROWSER] Stopping browser")
         browser?.stopBrowsingForPeers()
-    }
-    
-    // Send invite with password
-    public func invite(_ peer: MCPeerID, withPassword password: String) {
-        if let info = discoveryInfoByPeer[peer],
-            let nonce = info["nonce"],
-            let expectedProof = info["proof"]
-        {
-            let computedProof = hmacSHA256Hex(key: password, message: nonce)
-
-            if computedProof != expectedProof {
-                return
-            }
-        }
-        
-        let data = try? JSONEncoder().encode(password)
-        browser?.invitePeer(peer, to: session, withContext: data, timeout: 10)
-    }
-    
-    // Disconnect session
-    public func disconnect() {
-        session.disconnect()
-    }
-    
-    // Send data
-    public func send(_ data: Data, reliably: Bool = true) throws {
-        let mode: MCSessionSendDataMode = reliably ? .reliable : .unreliable
-        try session.send(data, toPeers: session.connectedPeers, with: mode)
+        browser = nil
+        possiblePeers.removeAll()
+        discoveryInfoByPeer.removeAll()
     }
 }
 
@@ -209,25 +281,6 @@ extension TransportSession: MCNearbyServiceBrowserDelegate {
 }
 
 
-// MARK: - CryptoKit
-extension TransportSession {
-    
-    // Creates a HMAC
-    internal func hmacSHA256Hex(key: String, message: String) -> String {
-        let keyData = Data(key.utf8)
-        let msgData = Data(message.utf8)
-        let hmac = HMAC<SHA256>.authenticationCode(for: msgData, using: SymmetricKey(data: keyData))
-        return hmac.map { String(format: "%02x", $0) }.joined()
-    }
-    
-    // Creates a Random Nonce
-    internal func randomNonce(_ count: Int = 16) -> String {
-        let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        return String((0..<count).compactMap { _ in chars.randomElement() })
-    }
-}
-
-
 // MARK: - Session Delegate
 extension TransportSession: MCSessionDelegate {
 
@@ -240,22 +293,24 @@ extension TransportSession: MCSessionDelegate {
         print("[SESSION] Peer \(peerID.displayName) changed state")
 
         DispatchQueue.main.async { [weak self] in
-            self?.connectedPeers = session.connectedPeers
+            guard let self else { return }
+            self.connectedPeers = session.connectedPeers
+            self.onPeerChange?(self.connectedPeers)
 
             switch state {
             case .connected:
                 print("[SESSION] Connected to \(peerID.displayName)")
                 print("[SESSION] Total peers connected: \(session.connectedPeers.count)")
-                self?.notifyDelegate(.accepted)
+                self.notifyDelegate(.accepted)
             case .connecting:
                 print("[SESSION] Connecting to \(peerID.displayName)...")
             case .notConnected:
                 print("[SESSION] Unconnected from \(peerID.displayName)")
                 print(
-                    "[SESSION] Total de peers connected: \(session.connectedPeers.count)"
+                    "[SESSION] Total peers connected: \(session.connectedPeers.count)"
                 )
 
-            @unknown default:
+            default:
                 print("[SESSION] Unknown")
                 break
             }
@@ -280,15 +335,15 @@ extension TransportSession: MCSessionDelegate {
                 notifyDelegate(.gameMove(payload))
                 
             case .notification(let payload):
-                print("[\(getPeerName())] Received notification: \(payload.notification)")
+                print("[\(peerName)] Received notification: \(payload.notification)")
                 notifyDelegate(payload.notification)
                 
             case .textChatService(let payload):
-                print("[\(getPeerName())] Received the chat service")
+                print("[\(peerName)] Received the chat service")
                 textChatService = payload.service
             }
         } else {
-            print("[\(getPeerName())] Failed to decode data")
+            print("[\(peerName)] Failed to decode data")
         }
     }
 
@@ -316,4 +371,23 @@ extension TransportSession: MCSessionDelegate {
         at localURL: URL?,
         withError error: (any Error)?
     ) {}
+}
+
+
+// MARK: - CryptoKit
+extension TransportSession {
+    
+    // Creates a HMAC
+    fileprivate func hmacSHA256Hex(key: String, message: String) -> String {
+        let keyData = Data(key.utf8)
+        let msgData = Data(message.utf8)
+        let hmac = HMAC<SHA256>.authenticationCode(for: msgData, using: SymmetricKey(data: keyData))
+        return hmac.map { String(format: "%02x", $0) }.joined()
+    }
+    
+    // Creates a Random Nonce
+    fileprivate func randomNonce(_ count: Int = 16) -> String {
+        let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        return String((0..<count).compactMap { _ in chars.randomElement() })
+    }
 }
