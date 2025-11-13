@@ -188,6 +188,8 @@ extension PhysicsScene {
             let body = node.physicsBody,
             let target = targetPoint
         else { return }
+        
+        node.zRotation = .zero
 
         let pos = node.position
         let dx = target.x - pos.x
