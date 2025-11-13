@@ -8,10 +8,13 @@
 import Foundation
 import MultipeerConnectivity
 import CryptoKit
+import Combine
 
 
 // MARK: Main Class Declaration
-public final class TransportSession: NSObject, TransportSessionProtocol {
+public final class TransportSession: NSObject, ObservableObject, TransportSessionProtocol {
+    public var objectWillChange: ObservableObjectPublisher?
+    
     // Peers
     public private(set) var myPeerID: MCPeerID
     public private(set) var connectedPeers: [MCPeerID] = []
@@ -57,11 +60,25 @@ public final class TransportSession: NSObject, TransportSessionProtocol {
     public func disconnect() {
         session.disconnect()
     }
+}
+
+
+// MARK: Getters and Setters
+extension TransportSession {
     
-    // Send data
-    public func send(_ data: Data, reliably: Bool = true) throws {
-        let mode: MCSessionSendDataMode = reliably ? .reliable : .unreliable
-        try session.send(data, toPeers: session.connectedPeers, with: mode)
+    // Notification Handler
+    public func setNotificationHandler(_ handler: MPCNotificationDelegate) {
+        self.notificationHandler = handler
+    }
+    
+    // Possible peers
+    public func getPossiblePeers() -> [MCPeerID] {
+        possiblePeers
+    }
+    
+    // Peer name
+    public func getPeerName() -> String {
+        peerName
     }
 }
 
@@ -113,6 +130,12 @@ extension TransportSession {
         let payload = TextPayload(message: text, sender: user)
         let message = MPCMessage.text(payload)
         send(message: message)
+    }
+    
+    // Send data
+    public func send(_ data: Data, reliably: Bool = true) throws {
+        let mode: MCSessionSendDataMode = reliably ? .reliable : .unreliable
+        try session.send(data, toPeers: session.connectedPeers, with: mode)
     }
 }
 

@@ -9,14 +9,14 @@ import SwiftUI
 import MultipeerConnectivity
 
 struct LobbyView: View {
-    @ObservedObject private var session: MPCConnection
+    @ObservedObject private var session: TransportSession
     
     private let password: String
     
     @State private var gotoChat: Bool = false
     @State private var gotoGame: Bool = false
     
-    init(session: MPCConnection, password: String) {
+    init(session: TransportSession, password: String) {
         self.session = session
         self.password = password
     }
@@ -50,13 +50,13 @@ struct LobbyView: View {
         }
         .padding(16)
         .navigationDestination(isPresented: $gotoChat) {
-            ChatView(session: session)
+//            ChatView(session: session)
         }
         .fullScreenCover(isPresented: $gotoGame) {
-            GameView(session: session)
+//            GameView(session: session)
         }
         .onAppear {
-            session.notificationHandler = self
+            session.setNotificationHandler(self)
         }
     }
 }

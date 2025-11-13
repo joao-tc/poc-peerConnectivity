@@ -4,13 +4,13 @@
 //
 //  Created by João Pedro Teixeira de Carvalho on 04/11/25.
 //
-
+/*
 import MultipeerConnectivity
 import SwiftUI
 
 struct HostView: View {
 
-    @StateObject private var session: MPCConnection
+    @StateObject private var session: TransportSession
 
     private var username: String
 
@@ -106,3 +106,4 @@ struct HostView: View {
         return String((0..<length).compactMap { _ in charset.randomElement() })
     }
 }
+*/

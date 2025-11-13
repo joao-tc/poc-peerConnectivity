@@ -10,10 +10,10 @@ import SpriteKit
 
 struct GameView: View {
     
-    @ObservedObject private var session: MPCConnection
+    @ObservedObject private var session: TransportSession
     @State private var scene: PhysicsScene
     
-    public init(session: MPCConnection) {
+    public init(session: TransportSession) {
         self.session = session
         let initialSize = UIScreen.main.bounds.size
         _scene = State(wrappedValue: PhysicsScene(session: session, size: initialSize))
@@ -33,7 +33,7 @@ struct GameView: View {
             }
         }
         .onAppear {
-            session.notificationHandler = self
+            session.setNotificationHandler(self)
         }
     }
 }
