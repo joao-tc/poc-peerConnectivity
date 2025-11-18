@@ -57,7 +57,7 @@ struct ChatView: View {
 
 extension ChatView: MPCNotificationDelegate {
     func notify(_ notification: MPCNotifications) {
-        switch(notification) {
+        switch notification {
         case .refresh:
             refreshID = UUID()
             

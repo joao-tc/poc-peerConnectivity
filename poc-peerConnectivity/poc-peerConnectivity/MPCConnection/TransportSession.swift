@@ -347,13 +347,13 @@ extension TransportSession: MCSessionDelegate {
         fromPeer peerID: MCPeerID
     ) {
         if let message = try? JSONDecoder().decode(MPCMessage.self, from: data) {
-            switch(message) {
+            switch message {
             case .text(let payload):
                 print("[\(peerID.displayName)] \(payload.message)")
                 textChatService?.addMessage(payload.message, from: payload.sender)
                 notifyDelegate(.refresh)
             
-            case .game(let payload):
+            case .gameH(let payload):
                 print("Parcel from \(peerID.displayName) going to the \(payload.side)")
                 notifyDelegate(.gameMove(payload))
                 
@@ -364,6 +364,8 @@ extension TransportSession: MCSessionDelegate {
             case .textChatService(let payload):
                 print("[\(peerName)] Received the chat service")
                 textChatService = payload.service
+                
+            default: break
             }
         } else {
             print("[\(peerName)] Failed to decode data")

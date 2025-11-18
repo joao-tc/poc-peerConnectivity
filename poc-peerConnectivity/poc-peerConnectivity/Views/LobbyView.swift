@@ -63,7 +63,7 @@ struct LobbyView: View {
 
 extension LobbyView: MPCNotificationDelegate {
     func notify(_ notification: MPCNotifications) {
-        switch(notification) {
+        switch notification {
         case .nextView:
             gotoChat = true
             

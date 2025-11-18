@@ -8,7 +8,7 @@
 import SpriteKit
 import GameplayKit
 
-public enum EdgeSide: String, Codable { case left, right }
+public enum EdgeSide: String, Codable { case left, right, none }
 
 public final class PhysicsScene: SKScene {
 
@@ -119,7 +119,7 @@ public final class PhysicsScene: SKScene {
             if let node = entity.component(ofType: GKSKNodeComponent.self)?.node {
                 if let side = exitSide(for: node) {
                     print("Ball from \(session.getPeerName()) exited to the \(side)")
-                    sendParcel(side: side, node: node, entity: entity)
+                    sendParcelHorizontally(side: side, node: node, entity: entity)
                 }
             }
         }
@@ -138,7 +138,7 @@ public final class PhysicsScene: SKScene {
 
 // MARK: - Send and Spawn functions
 extension PhysicsScene {
-    private func sendParcel(
+    private func sendParcelHorizontally(
         side: EdgeSide,
         node: SKNode,
         entity: GKEntity
@@ -152,7 +152,7 @@ extension PhysicsScene {
             y: node.position.y,
             side: side
         )
-        let message = MPCMessage.game(payload)
+        let message = MPCMessage.gameH(payload)
         session.send(message: message)
     }
 

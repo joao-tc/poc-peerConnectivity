@@ -9,7 +9,8 @@ import Foundation
 
 public enum MPCMessage: Codable {
     case text(TextPayload)
-    case game(GamePayload)
+    case gameH(GamePayload)
+    case gameV(GamePayload)
     case notification(NotificationPayLoad)
     case textChatService(TextChatServicePayload)
 }
@@ -22,7 +23,9 @@ public struct TextPayload: Codable {
 public struct GamePayload: Codable {
     public let x: CGFloat
     public let y: CGFloat
-    public let side: EdgeSide
+    public var side: EdgeSide = .none
+    public var ingredientType: IngredientType = .genericParcel
+    public var ingredientState: IngredientState = .base
 }
 
 public struct NotificationPayLoad: Codable {
