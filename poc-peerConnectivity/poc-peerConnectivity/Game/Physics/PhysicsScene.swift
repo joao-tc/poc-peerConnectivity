@@ -12,10 +12,10 @@ public enum EdgeSide: String, Codable { case left, right, none }
 
 public final class PhysicsScene: SKScene {
 
-    private var session: TransportSession
+    private var session: GameSession
     private var entityManager: EntityManager?
 
-    public init(session: TransportSession, size: CGSize) {
+    public init(session: GameSession, size: CGSize) {
         self.session = session
         super.init(size: size)
     }
@@ -118,7 +118,7 @@ public final class PhysicsScene: SKScene {
         for entity in entities {
             if let node = entity.component(ofType: GKSKNodeComponent.self)?.node {
                 if let side = exitSide(for: node) {
-                    print("Ball from \(session.getPeerName()) exited to the \(side)")
+                    print("Ball from \(session.myID.rawValue) exited to the \(side)")
                     sendParcelHorizontally(side: side, node: node, entity: entity)
                 }
             }
@@ -152,8 +152,8 @@ extension PhysicsScene {
             y: node.position.y,
             side: side
         )
-        let message = MPCMessage.gameH(payload)
-        session.send(message: message)
+        
+        session.sendParcelHorizontally(payload)
     }
 
     public func spawnBall() {

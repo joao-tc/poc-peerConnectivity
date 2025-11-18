@@ -9,46 +9,50 @@ import Foundation
 import MultipeerConnectivity
 import Combine
 
-public enum GameMode {
+public enum GameMode: Codable {
     case classic
     case chaos
+}
+
+public struct PlayerID: Hashable, Codable {
+    let rawValue: String
 }
 
 public final class GameSession: ObservableObject {
     public var objectWillChange: ObservableObjectPublisher?
     
     private let transport: TransportSession
+    private let gameMode: GameMode
+
+    private let players: [PlayerID]
+    @Published private(set) var roles: [PlayerID: StationRole]
     
-    private let players: [MCPeerID]
+    public var myID: PlayerID {
+        PlayerID(rawValue: transport.myPeerID.displayName)
+    }
     
-    private let gameMode: GameMode = .classic
+    public var myRole: StationRole {
+        roles[myID] ?? .notSet
+    }
     
-    @Published private(set) var roles: [MCPeerID: StationRole]
-    
-    private var chefPeer: MCPeerID? {
+    private var chefID: PlayerID? {
         roles.first(where: { $0.value == .chef })?.key
     }
     
     private var amIChef: Bool {
-        guard let chefPeer = chefPeer else { return false }
-        
-        return chefPeer == transport.myPeerID
+        chefID == myID
     }
     
-    public init(transport: TransportSession, players: [MCPeerID], roles: [MCPeerID: StationRole]) {
-        precondition(players.count == 4, "Phase 1 requires exactly 4 players")
-        precondition(Set(roles.values).count == 4, "Each role must be used exactly once")
-        
+    public init(transport: TransportSession, config: GameConfigPayload) {
         self.transport = transport
-        self.players = players
-        self.roles = roles
-        
-        transport.setNotificationHandler(self)
+        self.gameMode = config.mode
+        self.players = config.players.map { PlayerID(rawValue: $0) }
+        self.roles = config.roles.reduce(into: [PlayerID: StationRole]()) { dict, pair in
+            dict[PlayerID(rawValue: pair.key)] = pair.value
+        }
     }
     
-    func sendIngredientToChef(_ ingredient: Ingredient) {
-        guard chefPeer != nil else { return }
-        
+    public func sendIngredientToChef(_ ingredient: Ingredient) {
         let x: CGFloat = CGFloat.random(in: -200...200)
         let y: CGFloat = -200
         
@@ -57,22 +61,25 @@ public final class GameSession: ObservableObject {
         let message = MPCMessage.gameV(payload)
         transport.send(message: message)
     }
+    
+    public func destinationForToss(from side: EdgeSide) -> PlayerID? {
+        if gameMode == .classic {
+            return chefID
+        }
+        return chefID
+    }
 }
 
 
-// MARK: - Notification Delegate
-extension GameSession: MPCNotificationDelegate {
-    public func notify(_ notification: MPCNotifications) {
-        
-        switch notification {
-            
-        case .gameMove(let payload):
-            if amIChef {
-                print("[GAMESESSION] Chef received ingredient: ", payload.ingredientType)
-            }
-            
-            
-        default: break
-        }
+// MARK: - Transmission layer masking
+extension GameSession {
+    
+    public func setNotificationHandler(_ handler: MPCNotificationDelegate) {
+        transport.setNotificationHandler(handler)
+    }
+    
+    public func sendParcelHorizontally(_ payload: GamePayload) {
+        let message = MPCMessage.gameH(payload)
+        transport.send(message: message)
     }
 }

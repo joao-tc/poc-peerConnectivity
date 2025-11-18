@@ -4,19 +4,20 @@
 //
 //  Created by João Pedro Teixeira de Carvalho on 04/11/25.
 //
-/*
+
 import MultipeerConnectivity
 import SwiftUI
 
 struct HostView: View {
 
     @StateObject private var session: TransportSession
+    private var gameSession: GameSession?
 
     private var username: String
 
     public init(username: String) {
         self.username = username
-        _session = StateObject(wrappedValue: MPCConnection(username: username))
+        _session = StateObject(wrappedValue: TransportSession(userName: username))
     }
 
     @State private var password: String = ""
@@ -52,26 +53,24 @@ struct HostView: View {
                     startChat()
                 }
                 .buttonStyle(.borderedProminent)
-                .frame(width: .infinity)
                 
                 Button("Start game") {
                     startGame()
                 }
                 .buttonStyle(.borderedProminent)
-                .frame(width: .infinity)
             }
         }
         .padding(16)
         .navigationDestination(isPresented: $gotoChat) {
-            ChatView(session: session)
+//            ChatView(session: session)
         }
         .fullScreenCover(isPresented: $gotoGame) {
-            GameView(session: session)
+            AssignRoleView(transport: session)
         }
         .onAppear {
-            password = generatePassword(length: 6)
+            password = generatePassword(length: 1)
             session.setHostPassword(password)
-            session.startAdvertising()
+            session.startAdvertising(withPassword: password)
         }
         .onDisappear {
             session.stopAdvertising()
@@ -82,8 +81,6 @@ struct HostView: View {
     private func startChat() {
         guard !session.connectedPeers.isEmpty else { return }
         let textChatService = MPCTextChatService()
-        session.textChatService = textChatService
-//        print("Host tryied to add textChatService to session. Result = \(session.textChatService != nil)")
         
         let payload = TextChatServicePayload(service: textChatService)
         let message = MPCMessage.textChatService(payload)
@@ -95,9 +92,7 @@ struct HostView: View {
     
     private func startGame() {
         guard !session.connectedPeers.isEmpty else { return }
-        
         session.stopAdvertising()
-        session.sendNotification(.nextView2)
         gotoGame = true
     }
 
@@ -106,4 +101,4 @@ struct HostView: View {
         return String((0..<length).compactMap { _ in charset.randomElement() })
     }
 }
-*/
+

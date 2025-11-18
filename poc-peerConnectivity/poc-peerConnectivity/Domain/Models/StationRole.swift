@@ -12,6 +12,7 @@ public enum StationRole: String, Codable, CaseIterable {
     case cuttingBoard
     case grill
     case fryer
+    case notSet
 
     public var displayName: String {
         switch self {
@@ -19,6 +20,7 @@ public enum StationRole: String, Codable, CaseIterable {
         case .cuttingBoard:  return "Cutting Board"
         case .grill:         return "Grill"
         case .fryer:         return "Fryer"
+        case .notSet:        return "Role not set"
         }
     }
 }

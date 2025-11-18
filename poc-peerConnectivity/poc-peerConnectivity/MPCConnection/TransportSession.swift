@@ -5,21 +5,22 @@
 //  Created by João Pedro Teixeira de Carvalho on 11/11/25.
 //
 
+import Combine
+import CryptoKit
 import Foundation
 import MultipeerConnectivity
-import CryptoKit
-import Combine
-
 
 // MARK: Main Class Declaration
-public final class TransportSession: NSObject, ObservableObject, TransportSessionProtocol {
+public final class TransportSession: NSObject, ObservableObject,
+    TransportSessionProtocol
+{
     public var objectWillChange: ObservableObjectPublisher?
-    
+
     // Peers
     public private(set) var myPeerID: MCPeerID
     public private(set) var connectedPeers: [MCPeerID] = []
     fileprivate var possiblePeers: [MCPeerID] = []
-    
+
     // Session parameters
     fileprivate let serviceType = "poc"
     fileprivate var session: MCSession!
@@ -28,60 +29,67 @@ public final class TransportSession: NSObject, ObservableObject, TransportSessio
     fileprivate var textChatService: MPCTextChatService?
     fileprivate var notificationHandler: MPCNotificationDelegate?
     fileprivate var peerName: String
-    
+
     // HMAC
     fileprivate var hostPassword: String?
     fileprivate var currentNonce: String?
     fileprivate var currentProof: String?
     fileprivate var discoveryInfoByPeer: [MCPeerID: [String: String]] = [:]
-    
+
     // Callbacks
     public var onReceiveData: ((Data, MCPeerID) -> Void)?
     public var onPeerChange: (([MCPeerID]) -> Void)?
-    
+
     // Initializer
     public init(userName: String) {
         let safeName = userName.isEmpty ? UIDevice.current.systemName : userName
         peerName = safeName
         myPeerID = MCPeerID(displayName: safeName)
         super.init()
-        session = MCSession(peer: myPeerID, securityIdentity: nil, encryptionPreference: .required)
+        session = MCSession(
+            peer: myPeerID,
+            securityIdentity: nil,
+            encryptionPreference: .required
+        )
         session.delegate = self
     }
-    
+
     // Deinitializer
     deinit {
         advertiser?.stopAdvertisingPeer()
         browser?.stopBrowsingForPeers()
         session.disconnect()
     }
-    
+
     // Disconnect session
     public func disconnect() {
         session.disconnect()
     }
 }
 
-
 // MARK: Getters and Setters
 extension TransportSession {
-    
+
     // Notification Handler
     public func setNotificationHandler(_ handler: MPCNotificationDelegate) {
         self.notificationHandler = handler
     }
-    
+
     // Possible peers
     public func getPossiblePeers() -> [MCPeerID] {
         possiblePeers
     }
-    
+
     // Peer name
     public func getPeerName() -> String {
         peerName
     }
-}
 
+    // Set password
+    public func setHostPassword(_ password: String) {
+        hostPassword = password
+    }
+}
 
 // MARK: - Sending Funcs
 extension TransportSession {
@@ -90,7 +98,7 @@ extension TransportSession {
     public func sendInvite(to peerID: MCPeerID) {
         browser?.invitePeer(peerID, to: session, withContext: nil, timeout: 10)
     }
-    
+
     public func invite(_ peer: MCPeerID, withPassword password: String) {
         if let info = discoveryInfoByPeer[peer],
             let nonce = info["nonce"],
@@ -102,15 +110,15 @@ extension TransportSession {
                 return
             }
         }
-        
+
         let data = try? JSONEncoder().encode(password)
         browser?.invitePeer(peer, to: session, withContext: data, timeout: 10)
     }
-    
+
     // Send generic message type
     public func send(message data: MPCMessage) {
         guard !session.connectedPeers.isEmpty else { return }
-        
+
         if let data = try? JSONEncoder().encode(data) {
             try? session.send(
                 data,
@@ -119,19 +127,19 @@ extension TransportSession {
             )
         }
     }
-    
+
     // Send text message
     public func send(text: String, from user: String) {
         print("[\(user)] Trying to send text message: \(text)")
         print("Current session has messageService? \(textChatService != nil)")
-        
+
         textChatService?.addMessage(text, from: user)
-        
+
         let payload = TextPayload(message: text, sender: user)
         let message = MPCMessage.text(payload)
         send(message: message)
     }
-    
+
     // Send data
     public func send(_ data: Data, reliably: Bool = true) throws {
         let mode: MCSessionSendDataMode = reliably ? .reliable : .unreliable
@@ -139,13 +147,12 @@ extension TransportSession {
     }
 }
 
-
 // MARK: - Notification Funcs
 extension TransportSession {
     public func notifyDelegate(_ notification: MPCNotifications) {
         notificationHandler?.notify(notification)
     }
-    
+
     public func sendNotification(_ notification: MPCNotifications) {
         let payLoad = NotificationPayLoad(notification: notification)
         let message = MPCMessage.notification(payLoad)
@@ -154,16 +161,15 @@ extension TransportSession {
     }
 }
 
-
 // MARK: - Advertising Funcs
 extension TransportSession {
-    
+
     // Start advertising with public nonce+proof for password authentication
     public func startAdvertising(withPassword password: String?) {
         print("[ADVERTISER] Started advertising...")
         print("[ADVERTISER] Device name: \(myPeerID.displayName)")
         print("[ADVERTISER] Service type: \(serviceType)")
-        
+
         hostPassword = password
         let nonce = randomNonce()
         currentNonce = nonce
@@ -171,7 +177,7 @@ extension TransportSession {
 
         let info: [String: String]? = {
             guard let nonce = currentNonce else { return nil }
-            
+
             if let nonce = currentNonce, let proof = currentProof {
                 return ["nonce": nonce, "proof": proof]
             }
@@ -188,7 +194,7 @@ extension TransportSession {
 
         print("[ADVERTISER] Advertising started!")
     }
-    
+
     // Stop advertising
     public func stopAdvertising() {
         print("[ADVERTISER] Stop advertising")
@@ -197,10 +203,9 @@ extension TransportSession {
     }
 }
 
-
 // MARK: - Browsing funcs
 extension TransportSession {
-    
+
     // Start browsing
     public func startBrowsing() {
         print("[BROWSER] Starting browser...")
@@ -215,7 +220,7 @@ extension TransportSession {
 
         print("[BROWSER] Browsing started!")
     }
-    
+
     // Stop browsing
     public func stopBrowsing() {
         print("[BROWSER] Stopping browser")
@@ -226,10 +231,9 @@ extension TransportSession {
     }
 }
 
-
 // MARK: - Advertiser Delegate
 extension TransportSession: MCNearbyServiceAdvertiserDelegate {
-    
+
     // Received Invitation Callback
     public func advertiser(
         _ advertiser: MCNearbyServiceAdvertiser,
@@ -251,11 +255,13 @@ extension TransportSession: MCNearbyServiceAdvertiserDelegate {
             invitationHandler(true, session)
         } else {
             print("[ADVERTISER] Wrong password. Rejecting invite...")
-            print("Host password: \(hostPassword ?? "nil"), Received password: \(receivedPassword ?? "nil")")
+            print(
+                "Host password: \(hostPassword ?? "nil"), Received password: \(receivedPassword ?? "nil")"
+            )
             invitationHandler(false, nil)
         }
     }
-    
+
     // Failed to Start Advertising
     public func advertiser(
         _ advertiser: MCNearbyServiceAdvertiser,
@@ -267,10 +273,9 @@ extension TransportSession: MCNearbyServiceAdvertiserDelegate {
     }
 }
 
-
 // MARK: - Browser Delegate
 extension TransportSession: MCNearbyServiceBrowserDelegate {
-    
+
     // Peer Found Callback
     public func browser(
         _ browser: MCNearbyServiceBrowser,
@@ -291,7 +296,7 @@ extension TransportSession: MCNearbyServiceBrowserDelegate {
         possiblePeers.removeAll { $0 == peerID }
         discoveryInfoByPeer.removeValue(forKey: peerID)
     }
-    
+
     // Failed to Start Browsing
     public func browser(
         _ browser: MCNearbyServiceBrowser,
@@ -302,7 +307,6 @@ extension TransportSession: MCNearbyServiceBrowserDelegate {
         )
     }
 }
-
 
 // MARK: - Session Delegate
 extension TransportSession: MCSessionDelegate {
@@ -323,7 +327,9 @@ extension TransportSession: MCSessionDelegate {
             switch state {
             case .connected:
                 print("[SESSION] Connected to \(peerID.displayName)")
-                print("[SESSION] Total peers connected: \(session.connectedPeers.count)")
+                print(
+                    "[SESSION] Total peers connected: \(session.connectedPeers.count)"
+                )
                 self.notifyDelegate(.accepted)
             case .connecting:
                 print("[SESSION] Connecting to \(peerID.displayName)...")
@@ -346,25 +352,42 @@ extension TransportSession: MCSessionDelegate {
         didReceive data: Data,
         fromPeer peerID: MCPeerID
     ) {
-        if let message = try? JSONDecoder().decode(MPCMessage.self, from: data) {
+        if let message = try? JSONDecoder().decode(MPCMessage.self, from: data)
+        {
             switch message {
+
+                // Received a text message for the chat
             case .text(let payload):
                 print("[\(peerID.displayName)] \(payload.message)")
-                textChatService?.addMessage(payload.message, from: payload.sender)
+                textChatService?.addMessage(
+                    payload.message,
+                    from: payload.sender
+                )
                 notifyDelegate(.refresh)
-            
+
+                // Received a horizontally moving parcel
             case .gameH(let payload):
-                print("Parcel from \(peerID.displayName) going to the \(payload.side)")
+                print(
+                    "Parcel from \(peerID.displayName) going to the \(payload.side)"
+                )
                 notifyDelegate(.gameMove(payload))
-                
+
+                // Received a notification from other peer
             case .notification(let payload):
-                print("[\(peerName)] Received notification: \(payload.notification)")
+                print(
+                    "[\(peerName)] Received notification: \(payload.notification)"
+                )
                 notifyDelegate(payload.notification)
-                
+
+                // Received the text chat service
             case .textChatService(let payload):
                 print("[\(peerName)] Received the chat service")
                 textChatService = payload.service
-                
+
+                // Received initial game configs
+            case .gameConfig(let payload):
+                print("[\(peerName)] Received game configs")
+                notifyDelegate(.gameConfig(payload))
             default: break
             }
         } else {
@@ -379,7 +402,7 @@ extension TransportSession: MCSessionDelegate {
         withName streamName: String,
         fromPeer peerID: MCPeerID
     ) {}
-    
+
     // Started Receiving Resource
     public func session(
         _ session: MCSession,
@@ -387,7 +410,7 @@ extension TransportSession: MCSessionDelegate {
         fromPeer peerID: MCPeerID,
         with progress: Progress
     ) {}
-    
+
     // Finished Receiving Resource
     public func session(
         _ session: MCSession,
@@ -398,21 +421,24 @@ extension TransportSession: MCSessionDelegate {
     ) {}
 }
 
-
 // MARK: - CryptoKit
 extension TransportSession {
-    
+
     // Creates a HMAC
     fileprivate func hmacSHA256Hex(key: String, message: String) -> String {
         let keyData = Data(key.utf8)
         let msgData = Data(message.utf8)
-        let hmac = HMAC<SHA256>.authenticationCode(for: msgData, using: SymmetricKey(data: keyData))
+        let hmac = HMAC<SHA256>.authenticationCode(
+            for: msgData,
+            using: SymmetricKey(data: keyData)
+        )
         return hmac.map { String(format: "%02x", $0) }.joined()
     }
-    
+
     // Creates a Random Nonce
     fileprivate func randomNonce(_ count: Int = 16) -> String {
-        let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        let chars =
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         return String((0..<count).compactMap { _ in chars.randomElement() })
     }
 }

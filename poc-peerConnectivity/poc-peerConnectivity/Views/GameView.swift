@@ -10,10 +10,10 @@ import SpriteKit
 
 struct GameView: View {
     
-    @ObservedObject private var session: TransportSession
+    @ObservedObject private var session: GameSession
     @State private var scene: PhysicsScene
     
-    public init(session: TransportSession) {
+    public init(session: GameSession) {
         self.session = session
         let initialSize = UIScreen.main.bounds.size
         _scene = State(wrappedValue: PhysicsScene(session: session, size: initialSize))
@@ -51,6 +51,7 @@ extension GameView: MPCNotificationDelegate {
             let newX = scene.frame.midX + sign * newDistance
 
             let point = CGPoint(x: newX, y: CGFloat(payload.y))
+            print("Parcel entered \(session.myRole)'s view")
             scene.spawnBall(at: point, goingTo: payload.side)
 
         default:

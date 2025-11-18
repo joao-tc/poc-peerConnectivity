@@ -11,10 +11,11 @@ import MultipeerConnectivity
 struct LobbyView: View {
     @ObservedObject private var session: TransportSession
     
+    @State private var gameSession: GameSession?
+    
     private let password: String
     
     @State private var gotoChat: Bool = false
-    @State private var gotoGame: Bool = false
     
     init(session: TransportSession, password: String) {
         self.session = session
@@ -47,13 +48,15 @@ struct LobbyView: View {
                 Spacer()
                 Spacer()
             }
+            .fullScreenCover(isPresented: Binding(get: { gameSession != nil }, set: { _ in })) {
+                if let gs = gameSession {
+                    GameView(session: gs)
+                }
+            }
         }
         .padding(16)
         .navigationDestination(isPresented: $gotoChat) {
 //            ChatView(session: session)
-        }
-        .fullScreenCover(isPresented: $gotoGame) {
-//            GameView(session: session)
         }
         .onAppear {
             session.setNotificationHandler(self)
@@ -67,8 +70,8 @@ extension LobbyView: MPCNotificationDelegate {
         case .nextView:
             gotoChat = true
             
-        case .nextView2:
-            gotoGame = true
+        case .gameConfig(let payload):
+            self.gameSession = GameSession(transport: session, config: payload)
             
         default:
             break

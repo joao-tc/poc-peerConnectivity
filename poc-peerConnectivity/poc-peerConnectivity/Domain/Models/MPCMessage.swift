@@ -9,17 +9,20 @@ import Foundation
 
 public enum MPCMessage: Codable {
     case text(TextPayload)
+    case gameConfig(GameConfigPayload)
     case gameH(GamePayload)
     case gameV(GamePayload)
     case notification(NotificationPayLoad)
     case textChatService(TextChatServicePayload)
 }
 
+// Used to send text between peers in a session
 public struct TextPayload: Codable {
     public let message: String
     public let sender: String
 }
 
+// Used to send game data related to parcels
 public struct GamePayload: Codable {
     public let x: CGFloat
     public let y: CGFloat
@@ -28,10 +31,19 @@ public struct GamePayload: Codable {
     public var ingredientState: IngredientState = .base
 }
 
+// Used to pass the initial game configs from the host to the players
+public struct GameConfigPayload: Codable {
+    let mode: GameMode
+    let players: [String]
+    let roles: [String: StationRole]
+}
+
+// Used to trigger the notification delegates and make the app reactive
 public struct NotificationPayLoad: Codable {
     public let notification: MPCNotifications
 }
 
+// Used to transport the text message service if needed
 public struct TextChatServicePayload: Codable {
     public let service: MPCTextChatService
 }

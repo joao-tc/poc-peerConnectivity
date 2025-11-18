@@ -56,7 +56,7 @@ struct ContentView: View {
             }
             .padding()
             .navigationDestination(isPresented: $gotoHost) {
-//                HostView(username: username)
+                HostView(username: username)
             }
             .navigationDestination(isPresented: $gotoJoin) {
                 JoinView(username: username)
