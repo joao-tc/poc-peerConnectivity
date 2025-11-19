@@ -9,13 +9,13 @@ import SwiftUI
 
 struct JoinView: View {
 
-    @StateObject private var session: GameSession
+    @StateObject private var session: TransportSession
 
     private var username: String
 
     public init(username: String) {
         self.username = username
-        _session = StateObject(wrappedValue: GameSession(username: username))
+        _session = StateObject(wrappedValue: TransportSession(userName: username))
     }
 
     @State private var password: String = ""
@@ -52,7 +52,7 @@ struct JoinView: View {
             }
             .padding(16)
             .onAppear {
-                session.notificationHandler = self
+                session.setNotificationHandler(self)
                 session.startBrowsing()
                 password = ""
             }
@@ -66,8 +66,8 @@ struct JoinView: View {
     }
 
     private func tryToJoin(withPassword password: String) {
-        for peer in session.possiblePeers {
-            session.sendInvite(to: peer, withPassword: password)
+        for peer in session.getPossiblePeers() {
+            session.invite(peer, withPassword: password)
         }
     }
 }

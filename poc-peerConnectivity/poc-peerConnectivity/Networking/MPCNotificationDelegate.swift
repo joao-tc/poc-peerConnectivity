@@ -7,6 +7,7 @@
 
 import Foundation
 
+// Used to add reactivity to the app
 public protocol MPCNotificationDelegate {
     func notify(_ notification: MPCNotifications) -> Void
 }

@@ -9,14 +9,15 @@ import SwiftUI
 import MultipeerConnectivity
 
 struct LobbyView: View {
-    @ObservedObject private var session: GameSession
+    @ObservedObject private var session: TransportSession
+    
+    @State private var gameSession: GameSession?
     
     private let password: String
     
     @State private var gotoChat: Bool = false
-    @State private var gotoGame: Bool = false
     
-    init(session: GameSession, password: String) {
+    init(session: TransportSession, password: String) {
         self.session = session
         self.password = password
     }
@@ -47,28 +48,30 @@ struct LobbyView: View {
                 Spacer()
                 Spacer()
             }
+            .fullScreenCover(isPresented: Binding(get: { gameSession != nil }, set: { _ in })) {
+                if let gs = gameSession {
+                    GameView(session: gs)
+                }
+            }
         }
         .padding(16)
         .navigationDestination(isPresented: $gotoChat) {
-            ChatView(session: session)
-        }
-        .fullScreenCover(isPresented: $gotoGame) {
-            GameView(session: session)
+//            ChatView(session: session)
         }
         .onAppear {
-            session.notificationHandler = self
+            session.setNotificationHandler(self)
         }
     }
 }
 
 extension LobbyView: MPCNotificationDelegate {
     func notify(_ notification: MPCNotifications) {
-        switch(notification) {
+        switch notification {
         case .nextView:
             gotoChat = true
             
-        case .nextView2:
-            gotoGame = true
+        case .gameConfig(let payload):
+            self.gameSession = GameSession(transport: session, config: payload)
             
         default:
             break

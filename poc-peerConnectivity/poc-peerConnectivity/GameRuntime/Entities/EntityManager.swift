@@ -11,13 +11,18 @@ import SpriteKit
 
 public final class EntityManager {
 
+    // Set with all entities on the scene
     private var entities = Set<GKEntity>()
+    
+    // Access to the scene
     private var scene: SKScene
 
+    // Initializer
     public init(scene: SKScene) {
         self.scene = scene
     }
 
+    // Add a new entity to the scene
     public func add(entity: GKEntity) {
         entities.insert(entity)
 
@@ -26,6 +31,7 @@ public final class EntityManager {
         }
     }
     
+    // Removes an enitity from the scene
     public func remove(entity: GKEntity) {
         entities.remove(entity)
         
@@ -34,6 +40,7 @@ public final class EntityManager {
         }
     }
     
+    // Returns the set with all entities
     public func getEntities() -> Set<GKEntity> {
         entities
     }
@@ -42,6 +49,7 @@ public final class EntityManager {
 // Hit-test helpers
 extension EntityManager {
     
+    // Returns the top-most entity on a given position
     public func entity(at point: CGPoint) -> GKEntity? {
         
         let candidates: [(GKEntity, SKNode)] = entities.compactMap { entity in
@@ -57,6 +65,7 @@ extension EntityManager {
         return candidates.max(by: { $0.1.zPosition < $1.1.zPosition })?.0
     }
     
+    // Exposes access to an entity's node
     public func node(for entity: GKEntity) -> SKNode? {
         entity.component(ofType: GKSKNodeComponent.self)?.node
     }

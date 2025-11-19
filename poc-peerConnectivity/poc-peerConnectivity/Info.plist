@@ -4,7 +4,7 @@
 <dict>
 	<key>NSBonjourServices</key>
 	<array>
-		<string>_test._tcp.</string>
+		<string>_poc._tcp.</string>
 	</array>
 </dict>
 </plist>

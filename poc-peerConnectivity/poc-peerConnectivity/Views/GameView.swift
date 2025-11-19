@@ -33,7 +33,7 @@ struct GameView: View {
             }
         }
         .onAppear {
-            session.notificationHandler = self
+            session.setNotificationHandler(self)
         }
     }
 }
@@ -51,6 +51,7 @@ extension GameView: MPCNotificationDelegate {
             let newX = scene.frame.midX + sign * newDistance
 
             let point = CGPoint(x: newX, y: CGFloat(payload.y))
+            print("Parcel entered \(session.myRole)'s view")
             scene.spawnBall(at: point, goingTo: payload.side)
 
         default:

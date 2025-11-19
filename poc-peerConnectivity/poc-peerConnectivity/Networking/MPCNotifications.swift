@@ -7,6 +7,7 @@
 
 import Foundation
 
+// Different types of notification
 public enum MPCNotifications: Codable {
     case nextView
     case nextView2
@@ -15,4 +16,5 @@ public enum MPCNotifications: Codable {
     case accepted
     case refresh
     case gameMove(GamePayload)
+    case gameConfig(GameConfigPayload)
 }

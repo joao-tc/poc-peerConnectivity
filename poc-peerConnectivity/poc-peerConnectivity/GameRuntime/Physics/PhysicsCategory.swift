@@ -7,6 +7,7 @@
 
 import Foundation
 
+// Physics category - used to set the different hit categories
 public struct PhysicsCategory {
     static let edge: UInt32 = 1 << 0
     static let parcel: UInt32 = 1 << 1
