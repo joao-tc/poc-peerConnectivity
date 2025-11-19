@@ -10,12 +10,16 @@ import SwiftUI
 
 struct AssignRoleView: View {
 
+    // Transport layer
     @ObservedObject private var transport: TransportSession
-    @State private var assignedRoles: [MCPeerID: StationRole] = [:]
+
+    // Game layer
     @State private var gameSession: GameSession?
+    
+    // Roles assigned to each player
+    @State private var assignedRoles: [MCPeerID: StationRole] = [:]
 
-    @State private var startGame: Bool = false
-
+    // Initializer
     public init(transport: TransportSession) {
         self.transport = transport
     }
@@ -60,6 +64,7 @@ struct AssignRoleView: View {
         }
     }
 
+    // Verifies all conditions to start the game
     private var canStart: Bool {
         let peers = transport.connectedPeers
         let requiredPlayers = 2
@@ -84,6 +89,7 @@ struct AssignRoleView: View {
         return cond1 && cond2 && cond3
     }
 
+    // Assign a role to a peer
     private func assign(_ role: StationRole, to peer: MCPeerID) {
         for (p, r) in assignedRoles where r == role && p != peer {
             assignedRoles[p] = nil
@@ -91,6 +97,7 @@ struct AssignRoleView: View {
         assignedRoles[peer] = role
     }
 
+    // Starts the game if all conditions are cleared
     private func startGameIfReady() {
         guard canStart else {
             print("Can't start")

@@ -8,13 +8,15 @@
 import SpriteKit
 import GameplayKit
 
-public enum EdgeSide: String, Codable { case left, right, none }
-
 public final class PhysicsScene: SKScene {
 
+    // Game session - transport layer + game handling features
     private var session: GameSession
+    
+    // Entity manager - used to manage entities 😃
     private var entityManager: EntityManager?
 
+    // Initializers
     public init(session: GameSession, size: CGSize) {
         self.session = session
         super.init(size: size)
@@ -27,25 +29,27 @@ public final class PhysicsScene: SKScene {
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    /***/
 
+    // Dragging-related variables
     private var isDragging = false
     private var currentDrag: GKEntity?
     private var targetPoint: CGPoint?
 
+    // Scene 'initializer'- triggered when the SKView is rendered
     override public func didMove(to view: SKView) {
         backgroundColor = .clear
         scaleMode = .resizeFill
         physicsWorld.gravity = .init(dx: 0, dy: 9.6)
 
-//        physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
-//        physicsBody?.categoryBitMask = PhysicsCategory.edge
-        
         self.entityManager = EntityManager(scene: self)
         
         spawnBall()
     }
 
     // MARK: - Touch funcs
+    
+    // Touches began - triggered when a touch is initialized
     override public func touchesBegan(
         _ touches: Set<UITouch>,
         with event: UIEvent?
@@ -68,7 +72,8 @@ public final class PhysicsScene: SKScene {
         targetPoint = location
         body.angularVelocity = 0
     }
-
+    
+    // Touches moved - triggered when the user drags the finger on the screen
     override public func touchesMoved(
         _ touches: Set<UITouch>,
         with event: UIEvent?
@@ -77,6 +82,7 @@ public final class PhysicsScene: SKScene {
         targetPoint = touch.location(in: self)
     }
 
+    // Touches ended/cancelled - triggered when the user stops touching the screen
     override public func touchesEnded(
         _ touches: Set<UITouch>,
         with event: UIEvent?
@@ -90,7 +96,9 @@ public final class PhysicsScene: SKScene {
     ) {
         endDrag()
     }
+    /***/
 
+    // End drag - used to reset all dragging-related variables
     private func endDrag() {
         isDragging = false
         
@@ -110,6 +118,7 @@ public final class PhysicsScene: SKScene {
     }
     // MARK: -
 
+    // Update - acts as the 'tick' function, being called right before each rendering iteration
     override public func update(_ currentTime: TimeInterval) {
         handleMovementUpdate()
         
@@ -125,6 +134,7 @@ public final class PhysicsScene: SKScene {
         }
     }
 
+    // Did change size - triggered whenever the app view changes its size (ex.: rotate the phone)
     public override func didChangeSize(_ oldSize: CGSize) {
         super.didChangeSize(oldSize)
         physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
@@ -138,6 +148,8 @@ public final class PhysicsScene: SKScene {
 
 // MARK: - Send and Spawn functions
 extension PhysicsScene {
+    
+    // Send parecl horizontally - Sends a parcel horizontally
     private func sendParcelHorizontally(
         side: EdgeSide,
         node: SKNode,
@@ -156,6 +168,7 @@ extension PhysicsScene {
         session.sendParcelHorizontally(payload)
     }
 
+    // Spawn ball - used as a debug/development function, spawns a ball
     public func spawnBall() {
         let ball = Ball()
         let point: CGPoint = .init(x: frame.midX, y: frame.midY)
@@ -176,10 +189,13 @@ extension PhysicsScene {
         let direction: CGFloat = side == .right ? 1 : -1
         ball.body?.applyForce(.init(dx: 7500 * direction, dy: 0))
     }
+    /***/
 }
 
 // MARK: - Parcel movement
 extension PhysicsScene {
+    
+    // Handle movement update - used to manage the dragging mechanic, adds a force to the dragged object in the direction of the touch position
     private func handleMovementUpdate() {
         guard
             let manager = entityManager,
@@ -220,6 +236,7 @@ extension PhysicsScene {
         }
     }
     
+    // Exit side - triggered whenever a parcel exits the sides (horizontally) triggering notification/sending functions
     private func exitSide(for node: SKNode, minExitVelocity velocity: CGFloat = 1) -> EdgeSide? {
         guard let body = node.physicsBody else { return nil }
         

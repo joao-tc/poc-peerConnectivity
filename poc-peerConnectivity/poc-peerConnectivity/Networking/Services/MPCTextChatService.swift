@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 
+/* Created on learning/researching reasons, will not be on the final project */
 public final class MPCTextChatService: Codable {
     
     private var messages: [TextPayload] = []

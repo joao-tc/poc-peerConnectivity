@@ -154,7 +154,7 @@ extension TransportSession {
     }
 
     public func sendNotification(_ notification: MPCNotifications) {
-        let payLoad = NotificationPayLoad(notification: notification)
+        let payLoad = NotificationPayload(notification: notification)
         let message = MPCMessage.notification(payLoad)
         send(message: message)
         print("[\(peerName)] Sending notification: \(notification)")

@@ -9,23 +9,37 @@ import Foundation
 import MultipeerConnectivity
 import Combine
 
-public enum GameMode: Codable {
+// Different game modes
+public enum GameMode: String, Codable, Equatable {
     case classic
     case chaos
 }
 
+// Represents a part of the screen - used to send parcels via MP
+public enum EdgeSide: String, Codable {
+    case left
+    case right
+    case none
+}
+
+// Incapsulates the player name - used to transport IDs instead of MCPeerID instances
 public struct PlayerID: Hashable, Codable {
     let rawValue: String
 }
 
+
 public final class GameSession: ObservableObject {
-    public var objectWillChange: ObservableObjectPublisher?
     
+    // Transport layer
     private let transport: TransportSession
+    
+    // Current game mode
     private let gameMode: GameMode
 
+    // Connected players and their roles
     private let players: [PlayerID]
     @Published private(set) var roles: [PlayerID: StationRole]
+    
     
     public var myID: PlayerID {
         PlayerID(rawValue: transport.myPeerID.displayName)
@@ -43,6 +57,7 @@ public final class GameSession: ObservableObject {
         chefID == myID
     }
     
+    // Initializer
     public init(transport: TransportSession, config: GameConfigPayload) {
         self.transport = transport
         self.gameMode = config.mode
@@ -52,6 +67,7 @@ public final class GameSession: ObservableObject {
         }
     }
     
+    // Sends a Ingredient to the chef - used on classic mode
     public func sendIngredientToChef(_ ingredient: Ingredient) {
         let x: CGFloat = CGFloat.random(in: -200...200)
         let y: CGFloat = -200
@@ -62,11 +78,16 @@ public final class GameSession: ObservableObject {
         transport.send(message: message)
     }
     
+    // Used to get the 'neighboor' - on classic mode, always returns the chefID
     public func destinationForToss(from side: EdgeSide) -> PlayerID? {
-        if gameMode == .classic {
+        switch gameMode {
+        case .classic:
+            return chefID
+        
+        case .chaos:
+            // TODO: topography
             return chefID
         }
-        return chefID
     }
 }
 
@@ -74,10 +95,12 @@ public final class GameSession: ObservableObject {
 // MARK: - Transmission layer masking
 extension GameSession {
     
+    // Exposes notification delegate from the transport layer
     public func setNotificationHandler(_ handler: MPCNotificationDelegate) {
         transport.setNotificationHandler(handler)
     }
     
+    // Exposes specific use of the send(message) function
     public func sendParcelHorizontally(_ payload: GamePayload) {
         let message = MPCMessage.gameH(payload)
         transport.send(message: message)

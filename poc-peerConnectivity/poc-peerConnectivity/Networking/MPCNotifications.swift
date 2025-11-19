@@ -7,6 +7,7 @@
 
 import Foundation
 
+// Different types of notification
 public enum MPCNotifications: Codable {
     case nextView
     case nextView2

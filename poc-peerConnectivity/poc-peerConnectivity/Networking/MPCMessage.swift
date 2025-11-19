@@ -7,12 +7,13 @@
 
 import Foundation
 
+// MultiPeer Connectivity Message - used to general data transfer between connected peers
 public enum MPCMessage: Codable {
     case text(TextPayload)
     case gameConfig(GameConfigPayload)
     case gameH(GamePayload)
     case gameV(GamePayload)
-    case notification(NotificationPayLoad)
+    case notification(NotificationPayload)
     case textChatService(TextChatServicePayload)
 }
 
@@ -39,7 +40,7 @@ public struct GameConfigPayload: Codable {
 }
 
 // Used to trigger the notification delegates and make the app reactive
-public struct NotificationPayLoad: Codable {
+public struct NotificationPayload: Codable {
     public let notification: MPCNotifications
 }
 

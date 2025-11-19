@@ -7,12 +7,14 @@
 
 import Foundation
 
+// Ingredient
 public struct Ingredient: Codable, Identifiable {
     public var id: UUID
     public let type: IngredientType
     public var state: IngredientState
 }
 
+// Ingredient types - used to differentiate different ingredients
 public enum IngredientType: String, Codable {
     case lettuce
     case tomato
@@ -23,6 +25,7 @@ public enum IngredientType: String, Codable {
     case genericParcel
 }
 
+// Ingredient state - used to manage different states from ingredients
 public enum IngredientState: String, Codable {
     case base
     case chopped
